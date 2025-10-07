@@ -239,7 +239,6 @@ export default function ClubManagementPage() {
                       
                       {/* Image Column */}
                       <td className="p-4">
-                        {console.log('Rendering image for club:', club.clubName, 'Image:', club.image)}
                         {club.image ? (
                           <div className="flex items-center gap-3">
                             <div className="w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
@@ -251,7 +250,10 @@ export default function ClubManagementPage() {
                                   onError={(e) => {
                                     console.log('Base64 image failed to load:', club.image);
                                     e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                                    const nextSibling = e.currentTarget.nextElementSibling;
+                                    if (nextSibling instanceof HTMLElement) {
+                                      nextSibling.style.display = 'flex';
+                                    }
                                   }}
                                 />
                               ) : club.image.startsWith('http') ? (
@@ -262,7 +264,10 @@ export default function ClubManagementPage() {
                                   onError={(e) => {
                                     console.log('URL image failed to load:', club.image);
                                     e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                                    const nextSibling = e.currentTarget.nextElementSibling;
+                                    if (nextSibling instanceof HTMLElement) {
+                                      nextSibling.style.display = 'flex';
+                                    }
                                   }}
                                 />
                               ) : null}
