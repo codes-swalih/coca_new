@@ -2,10 +2,12 @@ import bookings from "../../../../app/models/bookings/bookingsModel";
 import { connectToMongoDB } from "../../../../../libs/mongodb";
 import { NextResponse } from "next/server";
 import { stat } from "fs";
+import { messaging } from "../../../../configs/firebase_admin";
 
 interface IMember {
   memberName: string;
   service: string;
+  memberId: string;
 }
 
 interface IAssociation {
@@ -119,14 +121,27 @@ export const GET = async (req: Request) => {
     await connectToMongoDB();
 
     if (memberId) {
-      // Fetch booking by memberId
-      const booking = await bookings.find({ memberId: memberId });
-      if (!booking) {
+      // Fetch bookings where memberId matches either:
+      // 1. The top-level memberId field, OR
+      // 2. Any memberId in the associatedProgram.members array
+      const booking = await bookings.find({
+        $or: [
+          { memberId: memberId },
+          {
+            "associatedProgram.members": {
+              $elemMatch: { memberId: memberId },
+            },
+          },
+        ],
+      });
+
+      if (!booking || booking.length === 0) {
         return NextResponse.json(
           { status: "Failed", message: "No booking found for this member" },
           { status: 404 }
         );
       }
+
       return NextResponse.json(
         {
           status: "Success",
@@ -145,6 +160,7 @@ export const GET = async (req: Request) => {
         { status: 404 }
       );
     }
+
     return NextResponse.json(
       {
         status: "Success",

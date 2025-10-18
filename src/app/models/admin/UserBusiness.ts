@@ -18,6 +18,10 @@ export interface IUserBusinessSchema extends Document {
   branch: string;
   upiId: string;
   paymentQrCode: string;
+  location: {
+    type: string;
+    coordinates: [number, number]; // [longitude, latitude]
+  };
   memberId: string;
 }
 
@@ -39,8 +43,15 @@ const UserBusinessSchema: Schema<IUserBusinessSchema> = new Schema({
   branch: { type: String },
   upiId: { type: String },
   paymentQrCode: { type: String },
+  location: {
+    type: { type: String, enum: ["Point"], required: true },
+    coordinates: { type: [Number], required: true },
+  },
   memberId: { type: String },
 });
+
+// 🧭 Add geospatial index
+UserBusinessSchema.index({ location: "2dsphere" });
 
 const userBusines: Model<IUserBusinessSchema> =
   mongoose.models.userBusines ||

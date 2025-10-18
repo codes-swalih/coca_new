@@ -20,6 +20,8 @@ interface userBusinessRequest {
   branch: string;
   upiId: string;
   paymentQrCode: string;
+  lat: string;
+  log: string;
   memberId: string;
 }
 
@@ -44,6 +46,8 @@ export const POST = async (req: Request) => {
     branch,
     upiId,
     paymentQrCode,
+    lat,
+    log,
     memberId,
   } = body;
 
@@ -78,6 +82,10 @@ export const POST = async (req: Request) => {
       branch,
       upiId,
       paymentQrCode,
+      location: {
+        type: "Point",
+        coordinates: [parseFloat(log), parseFloat(lat)],
+      },
       memberId,
     });
 

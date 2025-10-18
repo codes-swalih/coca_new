@@ -7,6 +7,7 @@ interface IUserPersonalSchema extends Document {
   secondaryPhone: string;
   email: string;
   memberId: string;
+  fcmToken: string;
 }
 
 const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
@@ -16,6 +17,7 @@ const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
   secondaryPhone: { type: String },
   email: { type: String },
   memberId: { type: String },
+  fcmToken : {type: String}
 });
 
 const userPersonal: Model<IUserPersonalSchema> =

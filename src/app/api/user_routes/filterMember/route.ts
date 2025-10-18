@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import userservice from "../../../models/admin/UserSerivce";
 import userBusines from "../../../models/admin/UserBusiness";
 import userPersonal from "../../../models/admin/UserPersonal";
 import UsersTestimonial from "../../../models/admin/UserTestimonial";
-
 import { connectToMongoDB } from "../../../../../libs/mongodb";
 
+/**
+ * This route filters members by:
+ * - serviceId (optional)
+ * - businessLocation (optional)
+ * - geographic location (optional via lat, lng, radius)
+ */
 export async function GET(req: NextRequest) {
   try {
     await connectToMongoDB();
@@ -14,13 +18,17 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const serviceIdString = searchParams.get("service");
     const businessLocation = searchParams.get("businessLocation");
+    const lat = searchParams.get("lat");
+    const lng = searchParams.get("lng");
+    const radius = parseFloat(searchParams.get("radius") || "5000"); // meters (default 5km)
 
-    if (!serviceIdString && !businessLocation) {
+    // validation
+    if (!serviceIdString && !businessLocation && !(lat && lng)) {
       return NextResponse.json(
         {
           success: false,
           message:
-            "Please choose at least one filter option (service or businessLocation)",
+            "Please provide at least one filter: service, businessLocation, or lat/lng",
         },
         { status: 400 }
       );
@@ -28,41 +36,56 @@ export async function GET(req: NextRequest) {
 
     let memberIds: string[] = [];
 
-    if (serviceIdString && businessLocation) {
+    // Step 1: Filter by Service ID (if provided)
+    if (serviceIdString) {
       const serviceMembers = await userservice
-        .find({
-          serviceId: serviceIdString,
-        })
+        .find({ serviceId: serviceIdString })
         .lean();
 
-      const serviceMemberIds = serviceMembers.map((member) => member.memberId);
-
-      const businessMembers = await userBusines
-        .find({
-          memberId: { $in: serviceMemberIds },
-          businessLocation: businessLocation,
-        })
-        .lean();
-
-      memberIds = businessMembers.map((member) => member.memberId);
-    } else if (serviceIdString) {
-      const serviceMembers = await userservice
-        .find({
-          serviceId: serviceIdString,
-        })
-        .lean();
-
-      memberIds = serviceMembers.map((member) => member.memberId);
-    } else if (businessLocation) {
-      const businessMembers = await userBusines
-        .find({
-          businessLocation: businessLocation,
-        })
-        .lean();
-
-      memberIds = businessMembers.map((member) => member.memberId);
+      memberIds = serviceMembers.map((m) => m.memberId);
     }
 
+    // Step 2: Filter by business location or proximity
+    let businessQuery: any = {};
+
+    if (businessLocation) {
+      businessQuery.businessLocation = businessLocation;
+    }
+
+    // 🧭 Step 3: Add geo filter if lat/lng provided
+    if (lat && lng) {
+      const latitude = parseFloat(lat);
+      const longitude = parseFloat(lng);
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid latitude or longitude",
+          },
+          { status: 400 }
+        );
+      }
+
+      businessQuery.location = {
+        $near: {
+          $geometry: { type: "Point", coordinates: [longitude, latitude] },
+          $maxDistance: radius, // in meters
+        },
+      };
+    }
+
+    // Step 4: Run business query
+    if (Object.keys(businessQuery).length > 0) {
+      if (memberIds.length > 0) {
+        businessQuery.memberId = { $in: memberIds };
+      }
+
+      const businessMembers = await userBusines.find(businessQuery).lean();
+      memberIds = businessMembers.map((m) => m.memberId);
+    }
+
+    // Handle empty results
     if (memberIds.length === 0) {
       return NextResponse.json({
         success: true,
@@ -71,6 +94,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Step 5: Fetch all related data (parallel queries)
     const [businesses, personal, services, testimonials] = await Promise.all([
       userBusines.find({ memberId: { $in: memberIds } }).lean(),
       userPersonal.find({ memberId: { $in: memberIds } }).lean(),
@@ -81,6 +105,7 @@ export async function GET(req: NextRequest) {
       UsersTestimonial.find({ memberId: { $in: memberIds } }).lean(),
     ]);
 
+    // Step 6: Merge results by memberId
     const memberDetailsMap = new Map();
 
     memberIds.forEach((memberId) => {

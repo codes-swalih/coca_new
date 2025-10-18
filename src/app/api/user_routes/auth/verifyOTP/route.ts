@@ -11,11 +11,12 @@ interface verifyOtpRequest {
   userId: string;
   secret: string;
   phone: string;
+  fcmToken: string;
 }
 
 export const POST = async (req: Request) => {
   const body: verifyOtpRequest = await req.json();
-  const { userId, secret, phone } = body;
+  const { userId, secret, phone, fcmToken } = body;
   try {
     await connectToMongoDB();
     const memberPersonal = await userPersonal.findOne({ phone: phone });
@@ -28,6 +29,8 @@ export const POST = async (req: Request) => {
         { status: 404 }
       );
     }
+    
+    await userPersonal.findByIdAndUpdate(userId, { fcmToken }, { new: true });
 
     const memberBusiness = await userBusines.findOne({
       memberId: memberPersonal.memberId,

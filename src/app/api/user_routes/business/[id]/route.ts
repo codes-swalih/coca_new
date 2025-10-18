@@ -2,83 +2,77 @@ import { NextResponse } from "next/server";
 import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import userBusines from "../../../../../app/models/admin/UserBusiness";
 
-interface businessUpdatingRequest {
-  nameOfBusiness: string;
-  businessPhoneNumber: string;
-  businessEmailId: string;
-  address: string;
-  businessLocation: string;
-  businessLogo: string;
-  gallaryLink: string;
-  facebookAccount: string;
-  instagramAccount: string;
-  whatsAppLink: string;
-  youtubeChannel: string;
-  bankName: string;
-  accountNumber: string;
-  ifsc: string;
-  branch: string;
-  upiId: string;
-  paymentQrCode: string;
+interface BusinessUpdatingRequest {
+  nameOfBusiness?: string;
+  businessPhoneNumber?: string;
+  businessEmailId?: string;
+  address?: string;
+  businessLocation?: string;
+  businessLogo?: string;
+  gallaryLink?: string;
+  facebookAccount?: string;
+  instagramAccount?: string;
+  whatsAppLink?: string;
+  youtubeChannel?: string;
+  bankName?: string;
+  accountNumber?: string;
+  ifsc?: string;
+  branch?: string;
+  upiId?: string;
+  lat?: string;
+  log?: string;
+  paymentQrCode?: string;
 }
 
 export const PUT = async (
   req: Request,
-  { params }: { params: { id: String } }
+  { params }: { params: { id: string } }
 ) => {
   const { id } = params;
-  const body: businessUpdatingRequest = await req.json();
-  const {
-    nameOfBusiness,
-    businessPhoneNumber,
-    businessEmailId,
-    address,
-    businessLocation,
-    businessLogo,
-    gallaryLink,
-    facebookAccount,
-    instagramAccount,
-    whatsAppLink,
-    youtubeChannel,
-    bankName,
-    accountNumber,
-    ifsc,
-    branch,
-    upiId,
-    paymentQrCode,
-  } = body;
+  const body: BusinessUpdatingRequest = await req.json();
 
   try {
     await connectToMongoDB();
+
+    // Prepare update object
+    const updateFields: any = { ...body };
+
+    // ✅ Handle lat/log properly (convert to GeoJSON)
+    if (body.lat && body.log) {
+      const lat = parseFloat(body.lat);
+      const log = parseFloat(body.log);
+
+      if (isNaN(lat) || isNaN(log)) {
+        return NextResponse.json(
+          {
+            status: "Failed",
+            message: "Invalid latitude or longitude values",
+          },
+          { status: 400 }
+        );
+      }
+
+      updateFields.location = {
+        type: "Point",
+        coordinates: [log, lat], // GeoJSON order: [longitude, latitude]
+      };
+
+      // remove old lat/log from object to prevent storing as string
+      delete updateFields.lat;
+      delete updateFields.log;
+    }
+
     const updatedBusinessDetails = await userBusines.findByIdAndUpdate(
       id,
-      {
-        nameOfBusiness,
-        businessPhoneNumber,
-        businessEmailId,
-        address,
-        businessLocation,
-        businessLogo,
-        gallaryLink,
-        facebookAccount,
-        instagramAccount,
-        whatsAppLink,
-        youtubeChannel,
-        bankName,
-        accountNumber,
-        ifsc,
-        branch,
-        upiId,
-        paymentQrCode,
-      },
-      { new: true }
+      updateFields,
+      { new: true, runValidators: true }
     );
 
     if (!updatedBusinessDetails) {
       return NextResponse.json(
         {
           status: "Failed",
-          message: "something wrong with the memberId or payloads",
+          message: "No business found with this ID",
         },
         { status: 404 }
       );
@@ -86,14 +80,14 @@ export const PUT = async (
 
     return NextResponse.json(
       {
-        status: "success",
-        message: "you have succesfully updated the business details",
+        status: "Success",
+        message: "Business details successfully updated",
         data: updatedBusinessDetails,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.log("Error in updating business details", error);
+    console.error("Error in updating business details:", error);
     return NextResponse.json(
       {
         message: "Internal server error",
@@ -104,19 +98,23 @@ export const PUT = async (
   }
 };
 
+// ✅ GET single business by ID
 export const GET = async (
   req: Request,
-  { params }: { params: { id: String } }
+  { params }: { params: { id: string } }
 ) => {
   const { id } = params;
+
   try {
     await connectToMongoDB();
+
     const memberBusinessDetails = await userBusines.findById(id);
+
     if (!memberBusinessDetails) {
       return NextResponse.json(
         {
           status: "Failed",
-          message: "There is no business details with this id",
+          message: "No business details found with this ID",
         },
         { status: 404 }
       );
@@ -125,33 +123,40 @@ export const GET = async (
     return NextResponse.json(
       {
         status: "Success",
-        message: "You have succesfully fetched the user business details",
+        message: "Fetched business details successfully",
         data: memberBusinessDetails,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.log("Error in fetching this business details", error);
-    return NextResponse.json({
-      message: "Internal server error",
-      error: error.message,
-    });
+    console.error("Error fetching business details:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 };
 
+// ✅ DELETE business by ID
 export const DELETE = async (
   req: Request,
-  { params }: { params: { id: String } }
+  { params }: { params: { id: string } }
 ) => {
   const { id } = params;
+
   try {
     await connectToMongoDB();
+
     const deletedBusinessDetails = await userBusines.findByIdAndDelete(id);
+
     if (!deletedBusinessDetails) {
       return NextResponse.json(
         {
           status: "Failed",
-          message: "There is no business details with this id",
+          message: "No business details found with this ID",
         },
         { status: 404 }
       );
@@ -160,16 +165,19 @@ export const DELETE = async (
     return NextResponse.json(
       {
         status: "Success",
-        message: "You have successfully deleted this business details",
+        message: "Business details deleted successfully",
         data: deletedBusinessDetails,
       },
       { status: 200 }
     );
   } catch (error: any) {
-    console.log("Error in deleting this business details", error);
-    return NextResponse.json({
-      message: "Internal server error",
-      error: error.message,
-    });
+    console.error("Error deleting business details:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 };

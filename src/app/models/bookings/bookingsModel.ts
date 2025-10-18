@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 interface IMember {
   memberName: string;
   service: string;
+  memberId: string;
 }
 
 interface IAssociation {
