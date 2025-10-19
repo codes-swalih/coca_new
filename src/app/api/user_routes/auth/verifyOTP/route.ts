@@ -29,8 +29,12 @@ export const POST = async (req: Request) => {
         { status: 404 }
       );
     }
-    
-    await userPersonal.findByIdAndUpdate(userId, { fcmToken }, { new: true });
+
+    await userPersonal.findOneAndUpdate(
+      { phone: phone },
+      { fcmToken },
+      { new: true }
+    );
 
     const memberBusiness = await userBusines.findOne({
       memberId: memberPersonal.memberId,
