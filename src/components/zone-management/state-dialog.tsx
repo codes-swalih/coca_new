@@ -95,7 +95,7 @@ export function StateDialog({ open, onOpenChange, state, onSuccess }: StateDialo
     try {
       const url = isEdit ? `/api/admin/state/${editingState?._id}` : '/api/admin/state';
       const method = isEdit ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -203,7 +203,7 @@ export function StateDialog({ open, onOpenChange, state, onSuccess }: StateDialo
               Manage all states - view, add, edit, and delete states.
             </DialogDescription>
           </DialogHeader>
-          
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">All States</TabsTrigger>
@@ -238,7 +238,7 @@ export function StateDialog({ open, onOpenChange, state, onSuccess }: StateDialo
                           </tr>
                         ) : (
                           states.map((state) => (
-                            <tr key={state._id} className="border-b hover:bg-gray-50">
+                            <tr key={state._id} className="border-b hover:bg-muted/50">
                               <td className="p-3 font-medium">{state.stateName}</td>
                               <td className="p-3 text-sm text-muted-foreground">
                                 {new Date(state.createdAt).toLocaleDateString()}
