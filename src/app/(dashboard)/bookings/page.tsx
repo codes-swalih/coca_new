@@ -6,7 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Eye, Calendar, MapPin, User, Phone, Mail, Clock, CreditCard, Building, Search } from 'lucide-react';
+import { Eye, Calendar, MapPin, User, Phone, Mail, Clock, CreditCard, Building, Search, Filter, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 
 interface Booking {
   _id: string;
@@ -45,6 +50,14 @@ export default function BookingsPage() {
   const [detailedViewOpen, setDetailedViewOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [functionTypeFilter, setFunctionTypeFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [minBudgetFilter, setMinBudgetFilter] = useState<string>('');
+  const [maxBudgetFilter, setMaxBudgetFilter] = useState<string>('');
 
   // Fetch all bookings
   const fetchBookings = async () => {
@@ -95,22 +108,98 @@ export default function BookingsPage() {
     }
   };
 
-  // Filter bookings based on search query
+  // Get unique values for filters
+  const uniqueStatuses = Array.from(new Set(bookings.map(b => b.workStatus).filter(Boolean)));
+  const uniqueFunctionTypes = Array.from(new Set(bookings.map(b => b.typeOfFunction).filter(Boolean)));
+
+  // Clear all filters
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setFunctionTypeFilter('all');
+    setDateRange(undefined);
+    setMinBudgetFilter('');
+    setMaxBudgetFilter('');
+    setSearchQuery('');
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = 
+    statusFilter !== 'all' || 
+    functionTypeFilter !== 'all' || 
+    dateRange?.from || 
+    dateRange?.to || 
+    minBudgetFilter || 
+    maxBudgetFilter || 
+    searchQuery;
+
+  // Filter bookings based on search query and filters
   const filteredBookings = bookings.filter((booking) => {
-    if (!searchQuery) return true;
-    
-    const query = searchQuery.toLowerCase();
-    return (
-      booking.bookingId.toLowerCase().includes(query) ||
-      booking.clientName.toLowerCase().includes(query) ||
-      booking.emailId.toLowerCase().includes(query) ||
-      booking.mobileNumber.includes(query) ||
-      booking.venue.toLowerCase().includes(query) ||
-      booking.typeOfFunction.toLowerCase().includes(query) ||
-      booking.customerRelation.toLowerCase().includes(query) ||
-      booking.totalBudget.includes(query) ||
-      booking.workStatus.toLowerCase().includes(query)
-    );
+    // Search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = (
+        booking.bookingId.toLowerCase().includes(query) ||
+        booking.clientName.toLowerCase().includes(query) ||
+        booking.emailId.toLowerCase().includes(query) ||
+        booking.mobileNumber.includes(query) ||
+        booking.venue.toLowerCase().includes(query) ||
+        booking.typeOfFunction.toLowerCase().includes(query) ||
+        booking.customerRelation.toLowerCase().includes(query) ||
+        booking.totalBudget.includes(query) ||
+        booking.workStatus.toLowerCase().includes(query)
+      );
+      if (!matchesSearch) return false;
+    }
+
+    // Status filter
+    if (statusFilter !== 'all' && booking.workStatus !== statusFilter) {
+      return false;
+    }
+
+    // Function type filter
+    if (functionTypeFilter !== 'all' && booking.typeOfFunction !== functionTypeFilter) {
+      return false;
+    }
+
+    // Date range filter
+    if (dateRange?.from || dateRange?.to) {
+      // Parse DD-MM-YYYY format to Date
+      const parseDate = (dateStr: string) => {
+        const [day, month, year] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        date.setHours(0, 0, 0, 0);
+        return date;
+      };
+
+      const bookingStart = parseDate(booking.startingDate);
+      const bookingEnd = parseDate(booking.endingDate);
+      const filterStart = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
+      const filterEnd = dateRange.to ? new Date(dateRange.to.setHours(0, 0, 0, 0)) : null;
+
+      // Check overlap: booking must start before/on filter end AND end after/on filter start
+      if (filterStart && filterEnd) {
+        if (bookingStart > filterEnd || bookingEnd < filterStart) return false;
+      } else if (filterStart && bookingEnd < filterStart) {
+        return false;
+      } else if (filterEnd && bookingStart > filterEnd) {
+        return false;
+      }
+    }
+
+    // Budget range filter
+    if (minBudgetFilter) {
+      const budget = parseFloat(booking.totalBudget.replace(/,/g, ''));
+      const minBudget = parseFloat(minBudgetFilter);
+      if (budget < minBudget) return false;
+    }
+
+    if (maxBudgetFilter) {
+      const budget = parseFloat(booking.totalBudget.replace(/,/g, ''));
+      const maxBudget = parseFloat(maxBudgetFilter);
+      if (budget > maxBudget) return false;
+    }
+
+    return true;
   });
 
 
@@ -139,26 +228,130 @@ export default function BookingsPage() {
         </div>
       </div>
 
-             {/* Search Bar */}
-       <Card>
-         <CardContent className="pt-6">
-           <div className="relative">
-             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-             <input
-               type="text"
-               placeholder="Search bookings by ID, client name, venue, function type, status..."
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-             />
-           </div>
-           {searchQuery && (
-             <div className="mt-2 text-sm text-muted-foreground">
-               Showing {filteredBookings.length} of {bookings.length} bookings
-             </div>
-           )}
-         </CardContent>
-       </Card>
+      {/* Search Bar and Filters */}
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          {/* Search Bar */}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search bookings by ID, client name, venue, function type, status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+              />
+            </div>
+            <Button
+              variant={showFilters ? "default" : "outline"}
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {hasActiveFilters && !showFilters && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
+                  !
+                </Badge>
+              )}
+            </Button>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/30">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="status-filter">Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger id="status-filter">
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      {uniqueStatuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Function Type Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="function-filter">Function Type</Label>
+                  <Select value={functionTypeFilter} onValueChange={setFunctionTypeFilter}>
+                    <SelectTrigger id="function-filter">
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {uniqueFunctionTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="space-y-2">
+                  <Label>Date Range</Label>
+                  <DateRangePicker
+                    dateRange={dateRange}
+                    onDateRangeChange={setDateRange}
+                  />
+                </div>
+
+                {/* Min Budget Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="min-budget-filter">Min Budget (₹)</Label>
+                  <Input
+                    id="min-budget-filter"
+                    type="number"
+                    placeholder="0"
+                    value={minBudgetFilter}
+                    onChange={(e) => setMinBudgetFilter(e.target.value)}
+                  />
+                </div>
+
+                {/* Max Budget Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="max-budget-filter">Max Budget (₹)</Label>
+                  <Input
+                    id="max-budget-filter"
+                    type="number"
+                    placeholder="No limit"
+                    value={maxBudgetFilter}
+                    onChange={(e) => setMaxBudgetFilter(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Results Summary */}
+          {(searchQuery || hasActiveFilters) && (
+            <div className="text-sm text-muted-foreground">
+              Showing {filteredBookings.length} of {bookings.length} bookings
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
        {/* Bookings Table */}
        <Card>
