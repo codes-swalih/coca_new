@@ -93,6 +93,13 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
         setSelectedState(chapter.state?._id || '');
         setSelectedDistrict(chapter.district?._id || '');
         setSelectedZone(chapter.zone?._id || '');
+        // Fetch districts and zones for editing
+        if (chapter.state?._id) {
+          fetchDistrictsByState(chapter.state._id);
+        }
+        if (chapter.district?._id) {
+          fetchZonesByDistrict(chapter.district._id);
+        }
         setActiveTab('form');
       } else {
         setChapterName('');
@@ -139,7 +146,7 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
       const response = await fetch('/api/admin/district');
       const data = await response.json();
       if (data.status === 'Success') {
-        const filteredDistricts = data.data.filter((district: District) => district.state._id === stateId);
+        const filteredDistricts = data.data.filter((district: District) => district?.state?._id === stateId);
         setDistricts(filteredDistricts);
       }
     } catch (error) {
@@ -152,7 +159,7 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
       const response = await fetch('/api/admin/zone');
       const data = await response.json();
       if (data.status === 'Success') {
-        const filteredZones = data.data.filter((zone: Zone) => zone.district._id === districtId);
+        const filteredZones = data.data.filter((zone: Zone) => zone?.district?._id === districtId);
         setZones(filteredZones);
       }
     } catch (error) {
@@ -187,7 +194,7 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
     try {
       const url = isEditing ? `/api/admin/chapter/${chapter._id}` : '/api/admin/chapter';
       const method = isEditing ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -209,6 +216,7 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
           description: data.message || `Chapter ${isEditing ? 'updated' : 'created'} successfully.`,
         });
         onSuccess();
+        fetchChapters();
         if (!isEditing) {
           setChapterName('');
           setSelectedState('');
@@ -425,9 +433,9 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
 
                 <div className="space-y-2">
                   <Label htmlFor="district">District</Label>
-                  <Select 
-                    value={selectedDistrict} 
-                    onValueChange={setSelectedDistrict} 
+                  <Select
+                    value={selectedDistrict}
+                    onValueChange={setSelectedDistrict}
                     required
                     disabled={!selectedState}
                   >
@@ -435,20 +443,26 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
                       <SelectValue placeholder={selectedState ? "Select a district" : "Select a state first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {districts.map((district) => (
-                        <SelectItem key={district._id} value={district._id}>
-                          {district.districtName}
-                        </SelectItem>
-                      ))}
+                      {districts.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No districts available for this state
+                        </div>
+                      ) : (
+                        districts.map((district) => (
+                          <SelectItem key={district._id} value={district._id}>
+                            {district.districtName}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="zone">Zone</Label>
-                  <Select 
-                    value={selectedZone} 
-                    onValueChange={setSelectedZone} 
+                  <Select
+                    value={selectedZone}
+                    onValueChange={setSelectedZone}
                     required
                     disabled={!selectedDistrict}
                   >
@@ -456,11 +470,17 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
                       <SelectValue placeholder={selectedDistrict ? "Select a zone" : "Select a district first"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {zones.map((zone) => (
-                        <SelectItem key={zone._id} value={zone._id}>
-                          {zone.zoneName}
-                        </SelectItem>
-                      ))}
+                      {zones.length === 0 ? (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          No zones available for this district
+                        </div>
+                      ) : (
+                        zones.map((zone) => (
+                          <SelectItem key={zone._id} value={zone._id}>
+                            {zone.zoneName}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
