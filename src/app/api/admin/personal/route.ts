@@ -70,7 +70,13 @@ export const POST = async (req: Request) => {
         { status: 500 }
       );
     }
-    const newMemeberBusiness = await userBusines.create({ memberId });
+    const newMemeberBusiness = await userBusines.create({
+      memberId,
+      location: {
+        type: "Point",
+        coordinates: [0, 0],
+      },
+    });
     const newMemberService = await userservice.create({ memberId });
     const newMembersTestimonial = await usersTestimonial.create({ memberId });
 
