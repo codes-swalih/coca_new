@@ -62,8 +62,9 @@ export function DistrictDialog({ open, onOpenChange, district, onSuccess }: Dist
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [districtsToDelete, setDistrictsToDelete] = useState<District | null>(null);
   const [activeTab, setActiveTab] = useState('list');
+  const [editingDistrict, setEditingDistrict] = useState<District | null>(null);
 
-  const isEditing = !!district;
+  const isEditing = !!district || !!editingDistrict;
 
   useEffect(() => {
     if (open) {
@@ -72,10 +73,12 @@ export function DistrictDialog({ open, onOpenChange, district, onSuccess }: Dist
       if (district) {
         setDistrictName(district.districtName || '');
         setSelectedState(district.state?._id || '');
+        setEditingDistrict(district);
         setActiveTab('form');
       } else {
         setDistrictName('');
         setSelectedState('');
+        setEditingDistrict(null);
         setActiveTab('list');
       }
     }
@@ -118,9 +121,10 @@ export function DistrictDialog({ open, onOpenChange, district, onSuccess }: Dist
 
     setLoading(true);
     try {
-      const url = isEditing ? `/api/admin/district/${district._id}` : '/api/admin/district';
+      const currentDistrict = district || editingDistrict;
+      const url = isEditing ? `/api/admin/district/${currentDistrict?._id}` : '/api/admin/district';
       const method = isEditing ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -140,9 +144,12 @@ export function DistrictDialog({ open, onOpenChange, district, onSuccess }: Dist
           description: data.message || `District ${isEditing ? 'updated' : 'created'} successfully.`,
         });
         onSuccess();
+        fetchDistricts();
         if (!isEditing) {
           setDistrictName('');
           setSelectedState('');
+        } else {
+          setEditingDistrict(null);
         }
         setActiveTab('list');
       } else {
@@ -202,22 +209,27 @@ export function DistrictDialog({ open, onOpenChange, district, onSuccess }: Dist
   };
 
   const handleEdit = (district: District) => {
+    setEditingDistrict(district);
     setDistrictName(district.districtName || '');
     setSelectedState(district.state?._id || '');
     setActiveTab('form');
   };
 
   const handleAddNew = () => {
+    setEditingDistrict(null);
     setDistrictName('');
     setSelectedState('');
     setActiveTab('form');
   };
 
   const handleCancel = () => {
-    if (isEditing) {
-      setActiveTab('list');
-    } else {
+    if (district) {
       onOpenChange(false);
+    } else {
+      setEditingDistrict(null);
+      setDistrictName('');
+      setSelectedState('');
+      setActiveTab('list');
     }
   };
 
