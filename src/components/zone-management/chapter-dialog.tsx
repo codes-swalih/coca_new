@@ -81,14 +81,16 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [chaptersToDelete, setChaptersToDelete] = useState<Chapter | null>(null);
   const [activeTab, setActiveTab] = useState('list');
+  const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
 
-  const isEditing = !!chapter;
+  const isEditing = !!chapter || !!editingChapter;
 
   useEffect(() => {
     if (open) {
       fetchStates();
       fetchChapters();
       if (chapter) {
+        setEditingChapter(chapter);
         setChapterName(chapter.chapterName || '');
         setSelectedState(chapter.state?._id || '');
         setSelectedDistrict(chapter.district?._id || '');
@@ -106,6 +108,7 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
         setSelectedState('');
         setSelectedDistrict('');
         setSelectedZone('');
+        setEditingChapter(null);
         setActiveTab('list');
       }
     }
@@ -192,7 +195,8 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
 
     setLoading(true);
     try {
-      const url = isEditing ? `/api/admin/chapter/${chapter._id}` : '/api/admin/chapter';
+      const currentChapter = chapter || editingChapter;
+      const url = isEditing ? `/api/admin/chapter/${currentChapter?._id}` : '/api/admin/chapter';
       const method = isEditing ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -222,6 +226,8 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
           setSelectedState('');
           setSelectedDistrict('');
           setSelectedZone('');
+        } else {
+          setEditingChapter(null);
         }
         setActiveTab('list');
       } else {
@@ -281,14 +287,23 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
   };
 
   const handleEdit = (chapter: Chapter) => {
+    setEditingChapter(chapter);
     setChapterName(chapter.chapterName || '');
     setSelectedState(chapter.state?._id || '');
     setSelectedDistrict(chapter.district?._id || '');
     setSelectedZone(chapter.zone?._id || '');
+    // Fetch districts and zones for editing
+    if (chapter.state?._id) {
+      fetchDistrictsByState(chapter.state._id);
+    }
+    if (chapter.district?._id) {
+      fetchZonesByDistrict(chapter.district._id);
+    }
     setActiveTab('form');
   };
 
   const handleAddNew = () => {
+    setEditingChapter(null);
     setChapterName('');
     setSelectedState('');
     setSelectedDistrict('');
@@ -297,10 +312,15 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
   };
 
   const handleCancel = () => {
-    if (isEditing) {
-      setActiveTab('list');
-    } else {
+    if (chapter) {
       onOpenChange(false);
+    } else {
+      setEditingChapter(null);
+      setChapterName('');
+      setSelectedState('');
+      setSelectedDistrict('');
+      setSelectedZone('');
+      setActiveTab('list');
     }
   };
 
