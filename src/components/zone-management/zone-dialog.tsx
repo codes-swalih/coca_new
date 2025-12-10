@@ -117,7 +117,7 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
       const response = await fetch('/api/admin/district');
       const data = await response.json();
       if (data.status === 'Success') {
-        const filteredDistricts = data.data.filter((district: District) => district.state._id === stateId);
+        const filteredDistricts = data.data.filter((district: District) => district?.state?._id === stateId);
         setDistricts(filteredDistricts);
       }
     } catch (error) {
@@ -152,7 +152,7 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
     try {
       const url = isEditing ? `/api/admin/zone/${zone._id}` : '/api/admin/zone';
       const method = isEditing ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -384,9 +384,9 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
 
                 <div className="space-y-2">
                   <Label htmlFor="district">District</Label>
-                  <Select 
-                    value={selectedDistrict} 
-                    onValueChange={setSelectedDistrict} 
+                  <Select
+                    value={selectedDistrict}
+                    onValueChange={setSelectedDistrict}
                     required
                     disabled={!selectedState}
                   >
