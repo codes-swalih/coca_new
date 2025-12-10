@@ -117,7 +117,7 @@ export default function ClubManagementPage() {
     try {
       const response = await fetch('/api/admin/clubs');
       const data = await response.json();
-      
+
       if (data?.status === "Success") {
         setCounts({
           clubs: data.data?.length || 0,
@@ -201,7 +201,7 @@ export default function ClubManagementPage() {
                 ) : (
                   clubs.map((club) => (
                     <tr key={club._id} className="border-b hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-200 group">
-                      
+
                       {/* Club Details Column */}
                       <td className="p-4">
                         <div className="space-y-1">
@@ -210,7 +210,7 @@ export default function ClubManagementPage() {
                           </div>
                         </div>
                       </td>
-                      
+
                       {/* Manager & Since Column */}
                       <td className="p-4">
                         <div className="space-y-1">
@@ -222,7 +222,7 @@ export default function ClubManagementPage() {
                           </div>
                         </div>
                       </td>
-                      
+
                       {/* Members & Events Column */}
                       <td className="p-4">
                         <div className="space-y-2">
@@ -236,15 +236,15 @@ export default function ClubManagementPage() {
                           </div>
                         </div>
                       </td>
-                      
+
                       {/* Image Column */}
                       <td className="p-4">
                         {club.image ? (
                           <div className="flex items-center gap-3">
                             <div className="w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
                               {club.image.startsWith('data:image') ? (
-                                <img 
-                                  src={club.image} 
+                                <img
+                                  src={club.image}
                                   alt={club.clubName}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -257,8 +257,8 @@ export default function ClubManagementPage() {
                                   }}
                                 />
                               ) : club.image.startsWith('http') ? (
-                                <img 
-                                  src={club.image} 
+                                <img
+                                  src={club.image}
                                   alt={club.clubName}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
@@ -284,12 +284,12 @@ export default function ClubManagementPage() {
                             </div>
                             <div className="flex flex-col">
                               <span className="text-sm font-medium text-foreground">
-                                {club.image.startsWith('data:image') ? 'Image' : 
-                                 club.image.startsWith('http') ? 'URL' : 'File'}
+                                {club.image.startsWith('data:image') ? 'Image' :
+                                  club.image.startsWith('http') ? 'URL' : 'File'}
                               </span>
                               <span className="text-xs text-muted-foreground max-w-24 truncate">
                                 {club.image.startsWith('data:image') ? 'Base64 Image' :
-                                 club.image.length > 20 ? club.image.substring(0, 20) + '...' : club.image}
+                                  club.image.length > 20 ? club.image.substring(0, 20) + '...' : club.image}
                               </span>
                             </div>
                           </div>
@@ -302,7 +302,7 @@ export default function ClubManagementPage() {
                           </div>
                         )}
                       </td>
-                      
+
                       {/* Actions Column */}
                       <td className="p-4">
                         <div className="flex items-center gap-2">
@@ -420,9 +420,9 @@ export default function ClubManagementPage() {
                       {selectedClub.image ? (
                         <div className="space-y-3">
                           <div className="w-full h-48 rounded-lg overflow-hidden border border-border">
-                            {selectedClub.image.startsWith('http') ? (
-                              <img 
-                                src={selectedClub.image} 
+                            {selectedClub.image.startsWith('http') || selectedClub.image.startsWith('data:image') || /\.(jpg|jpeg|png|gif|webp)$/i.test(selectedClub.image) ? (
+                              <img
+                                src={selectedClub.image}
                                 alt={selectedClub.clubName}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
