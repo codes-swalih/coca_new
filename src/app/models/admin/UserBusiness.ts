@@ -23,6 +23,7 @@ export interface IUserBusinessSchema extends Document {
     coordinates: [number, number]; // [longitude, latitude]
   };
   memberId: string;
+  mid: string;
 }
 
 const UserBusinessSchema: Schema<IUserBusinessSchema> = new Schema({
@@ -48,6 +49,7 @@ const UserBusinessSchema: Schema<IUserBusinessSchema> = new Schema({
     coordinates: { type: [Number], required: true },
   },
   memberId: { type: String },
+  mid: { type: String },
 });
 
 // 🧭 Add geospatial index

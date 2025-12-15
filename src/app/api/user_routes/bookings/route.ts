@@ -38,6 +38,7 @@ interface bookingsRequest {
   balanceAmount: string;
   expenses: string;
   memberId: string;
+  dayOrNight: boolean;
 }
 
 export const POST = async (req: Request) => {
@@ -62,6 +63,7 @@ export const POST = async (req: Request) => {
     balanceAmount,
     expenses,
     memberId,
+    dayOrNight,
   } = body;
 
   try {
@@ -97,6 +99,7 @@ export const POST = async (req: Request) => {
       balanceAmount,
       expenses,
       memberId,
+      dayOrNight,
     });
 
     return NextResponse.json({

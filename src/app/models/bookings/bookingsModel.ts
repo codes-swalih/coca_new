@@ -34,11 +34,13 @@ interface IBookingModel extends Document {
   balanceAmount: string;
   expenses: string;
   memberId: string;
+  dayOrNight: boolean;
 }
 
 const MemberSchema = new Schema({
   memberName: { type: String, required: true },
   service: { type: String, required: true },
+  memberId: { type: String, required: true },
 });
 
 const AssociationSchema = new Schema({
@@ -55,7 +57,7 @@ const BookingSchema: Schema<IBookingModel> = new Schema({
   startingDate: { type: String, required: true },
   endingDate: { type: String, required: true },
   mobileNumber: { type: String, required: true },
-  emailId: { type: String, required: true },
+  emailId: { type: String },
   venue: { type: String, required: true },
   typeOfFunction: { type: String, required: true },
   customerRelation: { type: String },
@@ -69,6 +71,7 @@ const BookingSchema: Schema<IBookingModel> = new Schema({
   balanceAmount: { type: String, required: true },
   expenses: { type: String },
   memberId: { type: String, required: true },
+  dayOrNight: { type: Boolean, required: true },
 });
 
 const bookings: Model<IBookingModel> =

@@ -35,6 +35,7 @@ interface bookingsUpdateRequest {
   balanceAmount: string;
   expenses: string;
   memberId: string;
+  dayOrNight: boolean;
 }
 
 export const PUT = async (
@@ -63,6 +64,7 @@ export const PUT = async (
     balanceAmount,
     expenses,
     memberId,
+    dayOrNight,
   } = body;
 
   try {
@@ -89,6 +91,7 @@ export const PUT = async (
         balanceAmount,
         expenses,
         memberId,
+        dayOrNight,
       },
       { new: true }
     );

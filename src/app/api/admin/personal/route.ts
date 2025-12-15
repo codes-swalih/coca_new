@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import userBusines from "../../../../app/models/admin/UserBusiness";
 import userservice from "../../../../app/models/admin/UserSerivce";
 import usersTestimonial from "@/app/models/admin/UserTestimonial";
+import Zone from "@/app/models/admin/Zone";
 
 interface UserPersonalRequest {
   nameOfBusinessOwner: string;
@@ -12,6 +13,7 @@ interface UserPersonalRequest {
   phone: string;
   secondaryPhone: string;
   email: string;
+  chapter?: string;
 }
 
 export const POST = async (req: Request) => {
@@ -20,8 +22,14 @@ export const POST = async (req: Request) => {
 
     const body: UserPersonalRequest = await req.json();
 
-    const { nameOfBusinessOwner, designation, phone, secondaryPhone, email } =
-      body;
+    const {
+      nameOfBusinessOwner,
+      designation,
+      phone,
+      secondaryPhone,
+      email,
+      chapter,
+    } = body;
 
     if (
       !nameOfBusinessOwner ||
@@ -37,6 +45,19 @@ export const POST = async (req: Request) => {
     }
 
     await connectToMongoDB();
+
+    if (chapter) {
+      const zoneExists = await Zone.findById(chapter);
+      if (!zoneExists) {
+        return NextResponse.json(
+          {
+            status: "Failed",
+            message: "Zone not found!",
+          },
+          { status: 404 }
+        );
+      }
+    }
 
     const isAlreadExist = await userPersonal.findOne({ email: email });
 
@@ -58,6 +79,7 @@ export const POST = async (req: Request) => {
       secondaryPhone,
       email,
       memberId,
+      chapter,
     });
 
     if (!newMember) {
@@ -105,6 +127,41 @@ export const POST = async (req: Request) => {
     );
   } catch (error: any) {
     console.error("Error in uploading member personal details:", error);
+    return NextResponse.json(
+      {
+        message: "Internal server error",
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+};
+
+export const GET = async (req: Request) => {
+  try {
+    await connectToMongoDB();
+    const allMembers = await userPersonal
+      .find()
+      .populate("chapter")
+      .sort({ createdAt: -1 });
+
+    if (allMembers.length === 0) {
+      return NextResponse.json(
+        { status: "Failed", message: "No members found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        status: "Success",
+        message: "Members fetched successfully",
+        data: allMembers,
+      },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.log("Error while fetching all members", error);
     return NextResponse.json(
       {
         message: "Internal server error",

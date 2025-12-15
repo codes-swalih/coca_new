@@ -2,6 +2,7 @@ import userPersonal from "@/app/models/admin/UserPersonal";
 import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import { NextResponse } from "next/server";
 import Service from "../../../../models/admin/services";
+import Zone from "@/app/models/admin/Zone";
 
 interface memberUpdatedPersonalRequest {
   nameOfBusinessOwner: string;
@@ -9,6 +10,7 @@ interface memberUpdatedPersonalRequest {
   phone: string;
   secondaryPhone: string;
   email: string;
+  chapter?: string;
 }
 
 export const PUT = async (
@@ -19,15 +21,41 @@ export const PUT = async (
 
   const body: memberUpdatedPersonalRequest = await req.json();
 
-  const { nameOfBusinessOwner, designation, phone, secondaryPhone, email } =
-    body;
+  const {
+    nameOfBusinessOwner,
+    designation,
+    phone,
+    secondaryPhone,
+    email,
+    chapter,
+  } = body;
 
   try {
     await connectToMongoDB();
 
+    if (chapter) {
+      const zoneExists = await Zone.findById(chapter);
+      if (!zoneExists) {
+        return NextResponse.json(
+          {
+            status: "Failed",
+            message: "Zone not found!",
+          },
+          { status: 404 }
+        );
+      }
+    }
+
     const updatingMemberPersonalDetails = await userPersonal.findByIdAndUpdate(
       id,
-      { nameOfBusinessOwner, designation, phone, secondaryPhone, email },
+      {
+        nameOfBusinessOwner,
+        designation,
+        phone,
+        secondaryPhone,
+        email,
+        chapter,
+      },
       { new: true }
     );
 
@@ -66,7 +94,9 @@ export const GET = async (
   try {
     await connectToMongoDB();
 
-    const memberPersonalDetails = await userPersonal.findById(id);
+    const memberPersonalDetails = await userPersonal
+      .findById(id)
+      .populate("chapter");
     if (!memberPersonalDetails) {
       return NextResponse.json(
         {
@@ -97,7 +127,6 @@ export const GET = async (
   }
 };
 
-
 export const DELETE = async (
   req: Request,
   { params }: { params: { id: String } }
@@ -107,12 +136,10 @@ export const DELETE = async (
     await connectToMongoDB();
     const deletedMember = await userPersonal.findByIdAndDelete(id);
     if (!deletedMember) {
-      return NextResponse.json(
-        {
-          status: "Failed",
-          message: "Something wrong with the id or payloads", 
-        }
-      )
+      return NextResponse.json({
+        status: "Failed",
+        message: "Something wrong with the id or payloads",
+      });
     }
     return NextResponse.json(
       {
@@ -122,7 +149,7 @@ export const DELETE = async (
       },
       { status: 200 }
     );
-  }catch (error: any) {
+  } catch (error: any) {
     console.log("Error in deleting the member", error);
     return NextResponse.json(
       {
@@ -132,4 +159,4 @@ export const DELETE = async (
       { status: 500 }
     );
   }
-}
+};

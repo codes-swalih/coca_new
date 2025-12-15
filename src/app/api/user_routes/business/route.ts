@@ -23,6 +23,7 @@ interface userBusinessRequest {
   lat: string;
   log: string;
   memberId: string;
+  mid: string;
 }
 
 export const POST = async (req: Request) => {
@@ -49,6 +50,7 @@ export const POST = async (req: Request) => {
     lat,
     log,
     memberId,
+    mid,
   } = body;
 
   try {
@@ -87,6 +89,7 @@ export const POST = async (req: Request) => {
         coordinates: [parseFloat(log), parseFloat(lat)],
       },
       memberId,
+      mid,
     });
 
     if (!uploadedBusinessDetails) {

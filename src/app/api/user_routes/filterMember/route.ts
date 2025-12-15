@@ -3,6 +3,7 @@ import userservice from "../../../models/admin/UserSerivce";
 import userBusines from "../../../models/admin/UserBusiness";
 import userPersonal from "../../../models/admin/UserPersonal";
 import UsersTestimonial from "../../../models/admin/UserTestimonial";
+import bookings from "../../../models/bookings/bookingsModel";
 import { connectToMongoDB } from "../../../../../libs/mongodb";
 
 /**
@@ -20,9 +21,10 @@ export async function GET(req: NextRequest) {
     const businessLocation = searchParams.get("businessLocation");
     const lat = searchParams.get("lat");
     const lng = searchParams.get("lng");
-    const radius = parseFloat(searchParams.get("radius") || "5000"); // meters (default 5km)
+    const radius = parseFloat(searchParams.get("radius") || "5000");
+    const date = searchParams.get("date");
+    const dayOrNightParam = searchParams.get("dayOrNight");
 
-    // validation
     if (!serviceIdString && !businessLocation && !(lat && lng)) {
       return NextResponse.json(
         {
@@ -83,6 +85,29 @@ export async function GET(req: NextRequest) {
 
       const businessMembers = await userBusines.find(businessQuery).lean();
       memberIds = businessMembers.map((m) => m.memberId);
+    }
+
+    // Step 5: Exclude members with bookings on the specified date
+    if (date) {
+      let bookingQuery: any = { startingDate: date };
+      if (dayOrNightParam !== null) {
+        const dayOrNight = dayOrNightParam === "true";
+        bookingQuery.dayOrNight = dayOrNight;
+      }
+
+      const bookedBookings = await bookings.find(bookingQuery).lean();
+      const bookedMemberIds = new Set<string>();
+
+      bookedBookings.forEach((booking) => {
+        bookedMemberIds.add(booking.memberId);
+        booking.associatedProgram.forEach((prog) => {
+          prog.members.forEach((mem) => {
+            bookedMemberIds.add(mem.memberId);
+          });
+        });
+      });
+
+      memberIds = memberIds.filter((id) => !bookedMemberIds.has(id));
     }
 
     // Handle empty results

@@ -8,6 +8,7 @@ interface IUserPersonalSchema extends Document {
   email: string;
   memberId: string;
   fcmToken: string;
+  chapter: mongoose.Types.ObjectId;
 }
 
 const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
@@ -17,7 +18,11 @@ const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
   secondaryPhone: { type: String },
   email: { type: String },
   memberId: { type: String },
-  fcmToken : {type: String}
+  fcmToken: { type: String },
+  chapter: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "zone",
+  },
 });
 
 const userPersonal: Model<IUserPersonalSchema> =

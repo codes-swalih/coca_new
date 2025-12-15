@@ -22,6 +22,7 @@ interface BusinessUpdatingRequest {
   lat?: string;
   log?: string;
   paymentQrCode?: string;
+  mid?: string;
 }
 
 export const PUT = async (

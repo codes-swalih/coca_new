@@ -4,6 +4,7 @@ import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import Zone from "@/app/models/admin/Zone";
 import District from "@/app/models/admin/District";
 import State from "@/app/models/admin/State";
+import userPersonal from "@/app/models/admin/UserPersonal";
 
 interface UpdateZoneRequest {
   zoneName: string;
@@ -21,7 +22,10 @@ export const PUT = async (
 
   if (!zoneName || !district || !state) {
     return NextResponse.json(
-      { status: "Failed", message: "Please provide zone name, district and state" },
+      {
+        status: "Failed",
+        message: "Please provide zone name, district and state",
+      },
       { status: 400 }
     );
   }
@@ -62,7 +66,8 @@ export const PUT = async (
       return NextResponse.json(
         {
           status: "Failed",
-          message: "District not found or does not belong to the specified state!",
+          message:
+            "District not found or does not belong to the specified state!",
         },
         { status: 404 }
       );
@@ -78,7 +83,8 @@ export const PUT = async (
       return NextResponse.json(
         {
           status: "Failed",
-          message: "Another zone with this name already exists in this district!",
+          message:
+            "Another zone with this name already exists in this district!",
         },
         { status: 409 }
       );
@@ -88,7 +94,9 @@ export const PUT = async (
       id,
       { zoneName, district, state },
       { new: true, runValidators: true }
-    ).populate("state", "stateName").populate("district", "districtName");
+    )
+      .populate("state", "stateName")
+      .populate("district", "districtName");
 
     return NextResponse.json({
       status: "Success",
@@ -125,8 +133,18 @@ export const DELETE = async (
       );
     }
 
-    // TODO: Add validation to check if zone is referenced by chapters
-    // This would require importing the Chapter model and checking references
+    // Check if zone is referenced by any user personal details
+    const isReferenced = await userPersonal.findOne({ chapter: id });
+    if (isReferenced) {
+      return NextResponse.json(
+        {
+          status: "Failed",
+          message:
+            "Cannot delete zone as it is referenced by member personal details!",
+        },
+        { status: 409 }
+      );
+    }
 
     await Zone.findByIdAndDelete(id);
 
