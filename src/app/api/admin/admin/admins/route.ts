@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     await connectToMongoDB();
     
-    const allAdmins = await adminModel.find().select('-password').sort({ createdAt: -1 });
+    const allAdmins = await adminModel.find().select('-password').sort({ createdAt: -1 }).populate('role');
     
     return NextResponse.json({
       status: 'Success',
