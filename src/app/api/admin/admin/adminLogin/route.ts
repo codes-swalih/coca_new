@@ -8,20 +8,25 @@ interface AdminLoginRequest {
   password: string;
 }
 
-
 export const POST = async (req: Request) => {
   const body: AdminLoginRequest = await req.json();
   const { username, password } = body;
   try {
     await connectToMongoDB();
-    const isAlreadyExist = await admin.findOne({ username: username });
+    const isAlreadyExist = await admin
+      .findOne({ username: username })
+      .populate("role");
     if (!isAlreadyExist) {
       return NextResponse.json(
         { status: "Failed", message: "There is no admin with this username" },
         { status: 404 }
       );
     }
-    const isPasswordCorrect = await bcrypt.compare(password, isAlreadyExist.password);
+    
+    const isPasswordCorrect = await bcrypt.compare(
+      password,
+      isAlreadyExist.password
+    );
     if (!isPasswordCorrect) {
       return NextResponse.json(
         { status: "Failed", message: "Password is incorrect" },
