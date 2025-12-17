@@ -127,7 +127,7 @@ export function EditEventDialog({ eventId, onSuccess }: EditEventDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="xs" className="h-7 w-7">
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>

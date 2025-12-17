@@ -88,23 +88,23 @@ export default function BookingsPage() {
   };
 
   const getStatusColor = (status: string | undefined | null) => {
-    if (!status) return 'bg-gray-100 text-gray-800';
+    if (!status) return 'bg-gray-50 text-gray-600 border border-gray-200';
     
     switch (status.toLowerCase()) {
       case 'upcoming':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-600 border border-blue-200';
       case 'ongoing':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-50 text-yellow-600 border border-yellow-200';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-600 border border-green-200';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-600 border border-red-200';
       case 'confirmed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-600 border border-green-200';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-50 text-yellow-600 border border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-600 border border-gray-200';
     }
   };
 
@@ -366,11 +366,11 @@ export default function BookingsPage() {
             <table className="w-full">
               <thead>
                                  <tr className="border-b border-border/50">
-                   <th className="p-4 text-left font-medium text-muted-foreground">Booking Details</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Client Information</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Event Details</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Dates</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Financial</th>
+                   <th className="p-4 text-left font-medium text-muted-foreground">Booking</th>
+                   <th className="p-4 text-left font-medium text-muted-foreground">Client</th>
+                   <th className="p-4 text-left font-medium text-muted-foreground">Event</th>
+                   <th className="p-4 text-left font-medium text-muted-foreground">Date</th>
+                   <th className="p-4 text-left font-medium text-muted-foreground">Amount</th>
                    <th className="p-4 text-left font-medium text-muted-foreground">Status</th>
                    <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
                  </tr>
@@ -385,72 +385,43 @@ export default function BookingsPage() {
                  ) : (
                    filteredBookings.map((booking) => (
                     <tr key={booking._id} className="border-b border-border/50 hover:bg-muted/30">
-                      {/* Booking Details */}
+                      {/* Booking */}
                       <td className="p-4">
-                        <div className="space-y-1">
-                          <div className="font-medium text-foreground">
-                            Booking #{booking.bookingId}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            ID: {booking._id.slice(-8)}
-                          </div>
+                        <div className="font-medium text-foreground">
+                          #{booking.bookingId}
                         </div>
                       </td>
 
-                      {/* Client Information */}
+                      {/* Client */}
                       <td className="p-4">
-                        <div className="space-y-1">
-                          <div className="font-medium text-foreground">
-                            {booking.clientName}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {booking.emailId}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {booking.mobileNumber}
-                          </div>
+                        <div className="text-foreground">
+                          {booking.clientName}
                         </div>
                       </td>
 
-                      {/* Event Details */}
+                      {/* Event */}
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="font-medium text-foreground">
-                            {booking.typeOfFunction}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
                             {booking.venue}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {booking.customerRelation}
+                            {booking.typeOfFunction}
                           </div>
                         </div>
                       </td>
 
-                      {/* Dates */}
+                      {/* Date */}
                       <td className="p-4">
-                        <div className="space-y-1">
-                          <div className="font-medium text-foreground">
-                            {booking.startingDate}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            to {booking.endingDate}
-                          </div>
+                        <div className="text-foreground">
+                          {booking.startingDate}
                         </div>
                       </td>
 
-                      {/* Financial */}
+                      {/* Amount */}
                       <td className="p-4">
-                        <div className="space-y-1">
-                          <div className="font-medium text-foreground">
-                            Total: ₹{booking.totalBudget}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Advance: ₹{booking.advanceAmount}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Balance: ₹{booking.balanceAmount}
-                          </div>
+                        <div className="font-medium text-foreground">
+                          ₹{booking.totalBudget}
                         </div>
                       </td>
 
@@ -465,9 +436,9 @@ export default function BookingsPage() {
                       <td className="p-4">
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="xs"
                           onClick={() => handleDetailedView(booking)}
-                          className="h-8 w-8 p-0"
+                          className="h-7 w-7"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

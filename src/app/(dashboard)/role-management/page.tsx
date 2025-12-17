@@ -15,7 +15,7 @@ import { Plus, Edit, Trash2, Shield, UserPlus, Search } from 'lucide-react';
 interface Role {
   _id: string;
   title: string;
-  categories: string[];
+  categories: (string | { _id?: string; title?: string; name?: string;[key: string]: any })[];
   createdAt: string;
   updatedAt: string;
 }
@@ -23,7 +23,7 @@ interface Role {
 interface Admin {
   _id: string;
   username: string;
-  role: string;
+  role: string | Role;
   createdAt: string;
 }
 
@@ -32,13 +32,13 @@ export default function RoleManagementPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Role Dialog States
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [roleForm, setRoleForm] = useState({
     title: '',
-    categories: [] as string[]
+    categories: [] as (string | { _id?: string; title?: string; name?: string;[key: string]: any })[]
   });
 
   // Admin Dialog States
@@ -70,15 +70,29 @@ export default function RoleManagementPage() {
       // Fetch roles
       const rolesResponse = await fetch('/api/admin/admin/roles');
       console.log('Roles response status:', rolesResponse.status);
-      
+
       if (rolesResponse.ok) {
         const rolesData = await rolesResponse.json();
         console.log('Roles data received:', rolesData);
-        
+        console.log('Raw roles data structure:', JSON.stringify(rolesData, null, 2));
+
         // Ensure the data is properly structured
         if (rolesData.data && Array.isArray(rolesData.data)) {
+          // Log each role to see its structure
+          rolesData.data.forEach((role: any, index: number) => {
+            console.log(`Role ${index}:`, role);
+            console.log(`Role ${index} categories:`, role.categories);
+            console.log(`Role ${index} categories type:`, typeof role.categories);
+            if (Array.isArray(role.categories)) {
+              role.categories.forEach((cat: any, catIndex: number) => {
+                console.log(`  Category ${catIndex}:`, cat);
+                console.log(`  Category ${catIndex} type:`, typeof cat);
+              });
+            }
+          });
+
           // Filter out any malformed role objects
-          const validRoles = (rolesData.data as any[]).filter((role: any) => 
+          const validRoles = (rolesData.data as any[]).filter((role: any) =>
             role && typeof role === 'object' && role._id
           );
           console.log('Valid roles after filtering:', validRoles);
@@ -95,15 +109,15 @@ export default function RoleManagementPage() {
       // Fetch admins
       const adminsResponse = await fetch('/api/admin/admin/admins');
       console.log('Admins response status:', adminsResponse.status);
-      
+
       if (adminsResponse.ok) {
         const adminsData = await adminsResponse.json();
         console.log('Admins data received:', adminsData);
-        
+
         // Ensure the data is properly structured
         if (adminsData.data && Array.isArray(adminsData.data)) {
           // Filter out any malformed admin objects
-          const validAdmins = (adminsData.data as any[]).filter((admin: any) => 
+          const validAdmins = (adminsData.data as any[]).filter((admin: any) =>
             admin && typeof admin === 'object' && admin._id
           );
           console.log('Valid admins after filtering:', validAdmins);
@@ -137,8 +151,16 @@ export default function RoleManagementPage() {
     const query = searchQuery.toLowerCase();
     return (
       role.title?.toLowerCase().includes(query) ||
-      (role.categories && Array.isArray(role.categories) && 
-       role.categories.some(category => category?.toLowerCase().includes(query)))
+      (role.categories && Array.isArray(role.categories) &&
+        role.categories.some(category => {
+          if (typeof category === 'string') {
+            return category.toLowerCase().includes(query);
+          } else if (category && typeof category === 'object') {
+            return (category.title?.toLowerCase().includes(query) ||
+              category.name?.toLowerCase().includes(query));
+          }
+          return false;
+        }))
     );
   });
 
@@ -360,7 +382,7 @@ export default function RoleManagementPage() {
     setAdminForm({
       username: admin.username,
       password: '',
-      role: admin.role
+      role: admin.role && typeof admin.role === 'object' ? (admin.role as Role)._id : (admin.role as string) || ''
     });
     setAdminDialogOpen(true);
   };
@@ -433,8 +455,12 @@ export default function RoleManagementPage() {
   const toggleCategory = (category: string) => {
     setRoleForm(prev => ({
       ...prev,
-      categories: prev.categories.includes(category)
-        ? prev.categories.filter(c => c !== category)
+      categories: prev.categories.some(c =>
+        typeof c === 'string' ? c === category : (c?.title === category || c?.name === category)
+      )
+        ? prev.categories.filter(c =>
+          typeof c === 'string' ? c !== category : (c?.title !== category && c?.name !== category)
+        )
         : [...prev.categories, category]
     }));
   };
@@ -464,13 +490,13 @@ export default function RoleManagementPage() {
             <Plus className="h-4 w-4 mr-2" />
             Add Role
           </Button>
-                     <Button onClick={() => {
-             setAdminDialogOpen(true);
-             resetAdminForm();
-           }} variant="outline">
-             <UserPlus className="h-4 w-4 mr-2" />
-             Create Admin
-           </Button>
+          <Button onClick={() => {
+            setAdminDialogOpen(true);
+            resetAdminForm();
+          }} variant="outline">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Create Admin
+          </Button>
         </div>
       </div>
 
@@ -479,13 +505,13 @@ export default function RoleManagementPage() {
         <CardContent className="pt-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <input
-                type="text"
-                placeholder="Search roles by title or categories..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
+            <input
+              type="text"
+              placeholder="Search roles by title or categories..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+            />
           </div>
           {searchQuery && (
             <div className="mt-2 text-sm text-muted-foreground">
@@ -499,139 +525,173 @@ export default function RoleManagementPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Roles Table */}
         <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            All Roles ({filteredRoles.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                                 <tr className="border-b border-border/50">
-                   <th className="p-4 text-left font-medium text-muted-foreground">Title</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Categories</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
-                 </tr>
-              </thead>
-              <tbody>
-                {filteredRoles.length === 0 ? (
-                  <tr>
-                                       <td colSpan={3} className="p-8 text-center text-muted-foreground">
-                     {searchQuery ? 'No roles match your search' : 'No roles found'}
-                   </td>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              All Roles ({filteredRoles.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="p-4 text-left font-medium text-muted-foreground">Title</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Categories</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
                   </tr>
-                ) : (
-                  filteredRoles.map((role, index) => (
-                    <tr key={role._id || `role-${index}`} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="p-4">
-                        <div className="font-medium text-foreground">{role.title || 'N/A'}</div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-wrap gap-1">
-                          {role.categories && Array.isArray(role.categories) ? (
-                            role.categories.map((category) => (
-                              <Badge key={category} variant="secondary" className="text-xs">
-                                {category}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-muted-foreground text-sm">No categories</span>
-                          )}
-                        </div>
-                      </td>
-                                             <td className="p-4">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditRole(role)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteRole(role._id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </thead>
+                <tbody>
+                  {filteredRoles.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                        {searchQuery ? 'No roles match your search' : 'No roles found'}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  ) : (
+                    filteredRoles.map((role, index) => (
+                      <tr key={role._id || `role-${index}`} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="p-4">
+                          <div className="font-medium text-foreground">{role.title || 'N/A'}</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-wrap gap-1">
+                            {(() => {
+                              console.log('Rendering categories for role:', role.title);
+                              console.log('Categories:', role.categories);
+                              console.log('Categories type:', typeof role.categories);
+                              console.log('Is array:', Array.isArray(role.categories));
 
-      {/* Admins Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            All Admins ({admins.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                                 <tr className="border-b border-border/50">
-                   <th className="p-4 text-left font-medium text-muted-foreground">Username</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Role</th>
-                   <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
-                 </tr>
-              </thead>
-              <tbody>
-                {admins.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="p-8 text-center text-muted-foreground">
-                      No admins found
-                    </td>
+                              if (role.categories && Array.isArray(role.categories)) {
+                                return role.categories.map((category, catIndex) => {
+                                  console.log(`Category ${catIndex}:`, category);
+                                  console.log(`Category ${catIndex} type:`, typeof category);
+
+                                  // Handle both string and object categories
+                                  let categoryText = 'Unknown';
+                                  let categoryKey = `cat-${catIndex}`;
+
+                                  if (typeof category === 'string') {
+                                    categoryText = category;
+                                    categoryKey = category;
+                                  } else if (category && typeof category === 'object') {
+                                    categoryText = category.title || category.name || 'Unknown';
+                                    categoryKey = category._id || `cat-${catIndex}`;
+                                  }
+
+                                  console.log(`Final categoryText: "${categoryText}"`);
+                                  console.log(`Final categoryKey: "${categoryKey}"`);
+
+                                  return (
+                                    <Badge key={categoryKey} variant="secondary" className="text-xs">
+                                      {typeof categoryText === 'string' ?
+                                        categoryText.split('_').map((word: string) =>
+                                          word.charAt(0).toUpperCase() + word.slice(1)
+                                        ).join(' ') :
+                                        'Unknown'
+                                      }
+                                    </Badge>
+                                  );
+                                });
+                              } else {
+                                return <span className="text-muted-foreground text-sm">No categories</span>;
+                              }
+                            })()}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              onClick={() => handleEditRole(role)}
+                              className="h-7 w-7"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              onClick={() => handleDeleteRole(role._id)}
+                              className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Admins Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              All Admins ({admins.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border/50">
+                    <th className="p-4 text-left font-medium text-muted-foreground">Username</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Role</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
                   </tr>
-                ) : (
-                  admins.map((admin, index) => (
-                    <tr key={admin._id || `admin-${index}`} className="border-b border-border/50 hover:bg-muted/30">
-                      <td className="p-4">
-                        <div className="font-medium text-foreground">{admin.username || 'N/A'}</div>
-                      </td>
-                      <td className="p-4">
-                        <Badge variant="outline">{admin.role || 'N/A'}</Badge>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditAdminClick(admin)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteAdmin(admin._id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </thead>
+                <tbody>
+                  {admins.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground">
+                        No admins found
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                  ) : (
+                    admins.map((admin, index) => (
+                      <tr key={admin._id || `admin-${index}`} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="p-4">
+                          <div className="font-medium text-foreground">{admin.username || 'N/A'}</div>
+                        </td>
+                        <td className="p-4">
+                          <Badge variant="outline">
+                            {admin.role && typeof admin.role === 'object' ? (admin.role as Role).title : (admin.role as string) || 'N/A'}
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="xs"
+                              onClick={() => handleEditAdminClick(admin)}
+                              className="h-7 w-7"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="xs"
+                              onClick={() => handleDeleteAdmin(admin._id)}
+                              className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Role Dialog */}
@@ -645,7 +705,7 @@ export default function RoleManagementPage() {
               {editingRole ? 'Modify role details and permissions' : 'Create a new role with specific permissions'}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="title">Title</Label>
@@ -656,7 +716,7 @@ export default function RoleManagementPage() {
                 placeholder="Enter role title"
               />
             </div>
-            
+
             <div>
               <Label>Categories</Label>
               <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
@@ -665,19 +725,21 @@ export default function RoleManagementPage() {
                     <input
                       type="checkbox"
                       id={category}
-                      checked={roleForm.categories.includes(category)}
+                      checked={roleForm.categories.some(c =>
+                        typeof c === 'string' ? c === category : (c?.title === category || c?.name === category)
+                      )}
                       onChange={() => toggleCategory(category)}
                       className="rounded border-gray-300"
                     />
                     <Label htmlFor={category} className="text-sm">
-                      {category.replace('_', ' ')}
+                      {category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                     </Label>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={() => {
               setRoleDialogOpen(false);
@@ -696,15 +758,15 @@ export default function RoleManagementPage() {
       {/* Admin Dialog */}
       <Dialog open={adminDialogOpen} onOpenChange={setAdminDialogOpen}>
         <DialogContent className="max-w-md">
-                   <DialogHeader>
-           <DialogTitle>
-             {editingAdmin ? 'Edit Admin' : 'Create New Admin'}
-           </DialogTitle>
-           <DialogDescription>
-             {editingAdmin ? 'Modify admin account details' : 'Create a new admin account with username, password, and role'}
-           </DialogDescription>
-         </DialogHeader>
-          
+          <DialogHeader>
+            <DialogTitle>
+              {editingAdmin ? 'Edit Admin' : 'Create New Admin'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingAdmin ? 'Modify admin account details' : 'Create a new admin account with username, password, and role'}
+            </DialogDescription>
+          </DialogHeader>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="username">Username</Label>
@@ -715,20 +777,20 @@ export default function RoleManagementPage() {
                 placeholder="Enter username"
               />
             </div>
-            
-                         <div>
-               <Label htmlFor="password">
-                 {editingAdmin ? 'New Password (leave blank to keep current)' : 'Password'}
-               </Label>
-               <Input
-                 id="password"
-                 type="password"
-                 value={adminForm.password}
-                 onChange={(e) => setAdminForm(prev => ({ ...prev, password: e.target.value }))}
-                 placeholder={editingAdmin ? 'Enter new password or leave blank' : 'Enter password'}
-               />
-             </div>
-            
+
+            <div>
+              <Label htmlFor="password">
+                {editingAdmin ? 'New Password (leave blank to keep current)' : 'Password'}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={adminForm.password}
+                onChange={(e) => setAdminForm(prev => ({ ...prev, password: e.target.value }))}
+                placeholder={editingAdmin ? 'Enter new password or leave blank' : 'Enter password'}
+              />
+            </div>
+
             <div>
               <Label htmlFor="role">Role</Label>
               <Select value={adminForm.role} onValueChange={(value) => setAdminForm(prev => ({ ...prev, role: value }))}>
@@ -736,27 +798,27 @@ export default function RoleManagementPage() {
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                                     {roles.map((role) => (
-                     <SelectItem key={role._id} value={role._id}>
-                       {role.title}
-                     </SelectItem>
-                   ))}
+                  {roles.map((role) => (
+                    <SelectItem key={role._id} value={role._id}>
+                      {role.title}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
-          
-                     <div className="flex justify-end gap-2 mt-6">
-             <Button variant="outline" onClick={() => {
-               setAdminDialogOpen(false);
-               resetAdminForm();
-             }}>
-               Cancel
-             </Button>
-             <Button onClick={editingAdmin ? handleEditAdmin : handleCreateAdmin}>
-               {editingAdmin ? 'Update Admin' : 'Create Admin'}
-             </Button>
-           </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => {
+              setAdminDialogOpen(false);
+              resetAdminForm();
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={editingAdmin ? handleEditAdmin : handleCreateAdmin}>
+              {editingAdmin ? 'Update Admin' : 'Create Admin'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

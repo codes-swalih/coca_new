@@ -29,7 +29,7 @@ export function Sidebar() {
           <Link href="/dashboard">
             <Button
               variant={pathname === "/dashboard" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Dashboard
@@ -38,7 +38,7 @@ export function Sidebar() {
           <Link href="/members">
             <Button
               variant={pathname === "/members" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <Users className="mr-2 h-4 w-4" />
               Members
@@ -47,7 +47,7 @@ export function Sidebar() {
           <Link href="/club-management">
             <Button
               variant={pathname === "/club-management" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <Building2 className="mr-2 h-4 w-4" />
               Club Management
@@ -56,7 +56,7 @@ export function Sidebar() {
           <Link href="/cocaEvents">
             <Button
               variant={pathname === "/cocaEvents" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <Calendar className="mr-2 h-4 w-4" />
               Coca Events
@@ -65,7 +65,7 @@ export function Sidebar() {
           <Link href="/advertisement">
             <Button
               variant={pathname === "/advertisement" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <ChartBar className="mr-2 h-4 w-4" />
               Advertisements
@@ -74,16 +74,16 @@ export function Sidebar() {
           <Link href="/services">
             <Button
               variant={pathname === "/services" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <Workflow className="mr-2 h-4 w-4" />
-              services
+              Services
             </Button>
           </Link>
           <Link href="/zone-management">
             <Button
               variant={pathname === "/zone-management" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <MapPin className="mr-2 h-4 w-4" />
               Zone Management
@@ -92,7 +92,7 @@ export function Sidebar() {
           <Link href="/bookings">
             <Button
               variant={pathname === "/bookings" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <BookOpen className="mr-2 h-4 w-4" />
               Bookings
@@ -101,7 +101,7 @@ export function Sidebar() {
           <Link href="/role-management">
             <Button
               variant={pathname === "/role-management" ? "secondary" : "ghost"}
-              className="w-full justify-start"
+              className="w-full justify-start mb-2"
             >
               <Shield className="mr-2 h-4 w-4" />
               Role Management
