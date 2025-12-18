@@ -19,10 +19,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-
-interface Counts {
-  clubs: number;
-}
+import { Search } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 interface Club {
   _id: string;
@@ -40,11 +38,10 @@ interface Club {
 }
 
 export default function ClubManagementPage() {
-  const [counts, setCounts] = useState<Counts>({
-    clubs: 0,
-  });
   const [loading, setLoading] = useState(true);
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [filteredClubs, setFilteredClubs] = useState<Club[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [clubDialogOpen, setClubDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -112,20 +109,37 @@ export default function ClubManagementPage() {
     }
   };
 
-  // Fetch counts and clubs data
-  const fetchCounts = async () => {
+  // Search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredClubs(clubs);
+      return;
+    }
+
+    const filtered = clubs.filter((club) => {
+      const searchTerm = query.toLowerCase();
+      return (
+        club.clubName?.toLowerCase().includes(searchTerm) ||
+        club.clubManager?.toLowerCase().includes(searchTerm)
+      );
+    });
+    setFilteredClubs(filtered);
+  };
+
+  // Fetch clubs data
+  const fetchClubs = async () => {
     try {
       const response = await fetch('/api/admin/clubs');
       const data = await response.json();
 
       if (data?.status === "Success") {
-        setCounts({
-          clubs: data.data?.length || 0,
-        });
-        setClubs(data.data || []);
+        const clubsData = data.data || [];
+        setClubs(clubsData);
+        setFilteredClubs(clubsData);
       }
     } catch (error) {
-      console.error("Error fetching counts:", error);
+      console.error("Error fetching clubs:", error);
     } finally {
       setLoading(false);
     }
@@ -133,34 +147,54 @@ export default function ClubManagementPage() {
 
   // Handle success callback
   const handleSuccess = () => {
-    fetchCounts();
+    fetchClubs();
   };
 
   useEffect(() => {
-    fetchCounts();
+    fetchClubs();
   }, []);
+
+  // Update filtered clubs when clubs data changes
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [clubs]);
 
   if (loading) {
     return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
+      <RouteGuard requiredPermission="club_management">
+        <div className="space-y-6 p-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
+          </div>
+          <div className="grid gap-4 md:grid-cols-1">
+            <div className="h-32 bg-muted animate-pulse rounded-lg"></div>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-1">
-          <div className="h-32 bg-muted animate-pulse rounded-lg"></div>
-        </div>
-      </div>
+      </RouteGuard>
     );
   }
 
   return (
+    <RouteGuard requiredPermission="club_management">
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
       </div>
 
-      {/* Add Club Button */}
-      <div className="flex justify-end">
+      {/* Search and Add Club */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 max-w-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search clubs by name, manager..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-input rounded-md bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+            />
+          </div>
+        </div>
         <Button onClick={handleAddClub} className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all duration-200">
           <Plus className="mr-2 h-4 w-4" />
           Add Club
@@ -169,9 +203,9 @@ export default function ClubManagementPage() {
 
       {/* All Clubs Table */}
       <Card className="shadow-sm border-2">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
+        <CardHeader className="bg-gradient-to-r from-primary/3 to-primary/5 border-b py-3">
+          <CardTitle className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
             All Clubs
           </CardTitle>
         </CardHeader>
@@ -180,33 +214,62 @@ export default function ClubManagementPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50">
-                  <th className="p-4 text-left font-medium text-muted-foreground">Club Details</th>
-                  <th className="p-4 text-left font-medium text-muted-foreground">Manager & Since</th>
-                  <th className="p-4 text-left font-medium text-muted-foreground">Members & Events</th>
-                  <th className="p-4 text-left font-medium text-muted-foreground">Image</th>
-                  <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
+                  <th className="p-4 text-left text-sm font-normal text-muted-foreground/80">Image</th>
+                  <th className="p-4 text-left text-sm font-normal text-muted-foreground/80">Club Details</th>
+                  <th className="p-4 text-left text-sm font-normal text-muted-foreground/80">Manager & Since</th>
+                  <th className="p-4 text-left text-sm font-normal text-muted-foreground/80">Members & Events</th>
+                  <th className="p-4 text-left text-sm font-normal text-muted-foreground/80">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {clubs.length === 0 ? (
+                {filteredClubs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-12 text-muted-foreground">
+                    <td colSpan={5} className="text-center p-12 text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
                         <Users className="h-12 w-12 text-muted-foreground/50" />
-                        <p className="text-lg font-medium">No clubs found</p>
-                        <p className="text-sm">Add your first club above to get started.</p>
+                        <p className="text-lg font-medium">
+                          {searchQuery ? "No clubs match your search" : "No clubs found"}
+                        </p>
+                        <p className="text-sm">
+                          {searchQuery ? "Try adjusting your search terms" : "Add your first club above to get started."}
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  clubs.map((club) => (
+                  filteredClubs.map((club) => (
                     <tr key={club._id} className="border-b hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-200 group">
+
+                      {/* Image Column */}
+                      <td className="p-4">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-border bg-muted flex-shrink-0">
+                          {club.image && (club.image.startsWith('data:image') || club.image.startsWith('http')) ? (
+                            <img
+                              src={club.image}
+                              alt={club.clubName}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = '<div class="w-full h-full bg-muted flex items-center justify-center"><svg class="h-6 w-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
                       {/* Club Details Column */}
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="font-semibold text-foreground group-hover:text-foreground text-lg">
-                            {club.clubName || 'N/A'}
+                            {club.clubName || '—'}
                           </div>
                         </div>
                       </td>
@@ -215,10 +278,10 @@ export default function ClubManagementPage() {
                       <td className="p-4">
                         <div className="space-y-1">
                           <div className="font-medium text-foreground/90">
-                            {club.clubManager || 'N/A'}
+                            {club.clubManager || '—'}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            Since: {club.since || 'N/A'}
+                            Since: {club.since || '—'}
                           </div>
                         </div>
                       </td>
@@ -237,96 +300,30 @@ export default function ClubManagementPage() {
                         </div>
                       </td>
 
-                      {/* Image Column */}
-                      <td className="p-4">
-                        {club.image ? (
-                          <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-border bg-muted">
-                              {club.image.startsWith('data:image') ? (
-                                <img
-                                  src={club.image}
-                                  alt={club.clubName}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    console.log('Base64 image failed to load:', club.image);
-                                    e.currentTarget.style.display = 'none';
-                                    const nextSibling = e.currentTarget.nextElementSibling;
-                                    if (nextSibling instanceof HTMLElement) {
-                                      nextSibling.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                              ) : club.image.startsWith('http') ? (
-                                <img
-                                  src={club.image}
-                                  alt={club.clubName}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    console.log('URL image failed to load:', club.image);
-                                    e.currentTarget.style.display = 'none';
-                                    const nextSibling = e.currentTarget.nextElementSibling;
-                                    if (nextSibling instanceof HTMLElement) {
-                                      nextSibling.style.display = 'flex';
-                                    }
-                                  }}
-                                />
-                              ) : null}
-                              {!club.image.startsWith('data:image') && !club.image.startsWith('http') && (
-                                <div className="w-full h-full bg-muted flex items-center justify-center">
-                                  <div className="text-center">
-                                    <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                                      <span className="text-xs font-medium text-primary">F</span>
-                                    </div>
-                                    <span className="text-xs text-muted-foreground">File</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-foreground">
-                                {club.image.startsWith('data:image') ? 'Image' :
-                                  club.image.startsWith('http') ? 'URL' : 'File'}
-                              </span>
-                              <span className="text-xs text-muted-foreground max-w-24 truncate">
-                                {club.image.startsWith('data:image') ? 'Base64 Image' :
-                                  club.image.length > 20 ? club.image.substring(0, 20) + '...' : club.image}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
-                              <span className="text-xs text-muted-foreground">No Image</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">No image</span>
-                          </div>
-                        )}
-                      </td>
-
                       {/* Actions Column */}
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             variant="outline"
-                            size="sm"
+                            size="xs"
                             onClick={() => handleDetailedView(club)}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size="xs"
                             onClick={() => handleEditClub(club)}
-                            className="h-8 w-8 p-0"
+                            className="h-7 w-7"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
-                            variant="outline"
-                            size="sm"
+                            variant="ghost"
+                            size="xs"
                             onClick={() => handleDeleteClub(club)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -618,5 +615,6 @@ export default function ClubManagementPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </RouteGuard>
   );
 }

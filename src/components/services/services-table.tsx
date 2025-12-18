@@ -152,7 +152,7 @@ export function ServicesTable() {
                     />
                   </TableCell>
                   <TableCell>{service.serviceTitle}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-1">
                     <ViewServiceDialog service={service} />
                     <EditServiceDialog
                       service={service}
@@ -160,7 +160,7 @@ export function ServicesTable() {
                     />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>

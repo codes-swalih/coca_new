@@ -143,12 +143,12 @@ export function EventsTable() {
                 <TableCell>{event.location}</TableCell>
                 <TableCell className="truncate max-w-xs">{event.aboutEvent}</TableCell>
                 
-                <TableCell className="text-right space-x-2">
+                <TableCell className="text-right space-x-1">
                   <ViewEventDialog eventId={event._id} />
                   <EditEventDialog eventId={event._id} onSuccess={fetchEvents} />
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon">
+                      <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, Users, Calendar, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getStoredAuthData } from "@/lib/authStorage";
 
 interface DashboardStats {
   totalMembers: number;
@@ -23,8 +24,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const adminId = localStorage.getItem("adminId");
-    if (!adminId) {
+    const authData = getStoredAuthData();
+    if (!authData) {
       router.push("/login");
     } else {
       fetchDashboardStats();

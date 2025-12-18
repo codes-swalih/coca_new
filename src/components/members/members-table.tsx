@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { EditMemberDialog } from "./edit-member-dialog";
 import { AddMemberDialog } from "./add-member-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -41,7 +41,7 @@ export function MembersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -220,45 +220,71 @@ export function MembersTable() {
               <TableHead>Business Name</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Address</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.member_personal_detail.memberId}>
-                <TableCell>{member.member_personal_detail.nameOfBusinessOwner}</TableCell>
-                <TableCell>{member.member_business_detail?.nameOfBusiness || "-"}</TableCell>
-                <TableCell>{member.member_personal_detail.phone}</TableCell>
-                <TableCell>{member.member_personal_detail.email}</TableCell>
-                <TableCell>{member.member_business_detail?.address || "-"}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <ViewMemberDialog memberId={member.member_personal_detail.memberId} />
-                  <EditMemberDialog member={member} onSave={handleEdit} />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the member's data.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(member.member_personal_detail._id)}>
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TableCell>
-              </TableRow>
-            ))}
+            {members.map((member) => {
+              // Helper functions for formatting
+              const formatName = (name: string) => {
+                return name.split(' ').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+              };
+
+              const formatPhone = (phone: string) => {
+                // Format phone as XXX-XXX-XXXX for better readability
+                const cleaned = phone.replace(/\D/g, '');
+                if (cleaned.length === 10) {
+                  return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                }
+                return phone;
+              };
+
+
+
+              return (
+                <TableRow key={member.member_personal_detail.memberId}>
+                  <TableCell className="font-medium">
+                    {formatName(member.member_personal_detail.nameOfBusinessOwner)}
+                  </TableCell>
+                  <TableCell>
+                    {member.member_business_detail?.nameOfBusiness || "—"}
+                  </TableCell>
+                  <TableCell>
+                    {formatPhone(member.member_personal_detail.phone)}
+                  </TableCell>
+                  <TableCell>
+                    {member.member_personal_detail.email}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
+                    <ViewMemberDialog memberId={member.member_personal_detail.memberId} />
+                    <EditMemberDialog member={member} onSave={handleEdit} />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the member's data.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(member.member_personal_detail._id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

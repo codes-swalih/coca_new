@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Bell, User } from "lucide-react";
+import { Bell, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
@@ -16,15 +17,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("adminId");
+    logout();
     setOpen(false);
-    // optionally redirect or refresh page
-    window.location.reload();
+    router.push("/login");
   };
 
   return (
@@ -47,8 +50,10 @@ export default function Header() {
           {/* Logout Dialog Trigger */}
           <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="sm" className="gap-2">
                 <User className="h-5 w-5" />
+                {user && <span className="hidden md:inline">{user.username}</span>}
+                <LogOut className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
 

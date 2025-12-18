@@ -1,4 +1,5 @@
 import admin from "../../../../../app/models/admin/adminModel";
+import "../../../../../app/models/admin/roles"; // Import to register the roles model for populate
 import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
