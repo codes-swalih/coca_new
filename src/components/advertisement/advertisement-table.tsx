@@ -151,8 +151,18 @@ export function AdvertisementTable() {
                       className="h-20 w-20 object-cover rounded"
                     />
                   </TableCell>
-                  <TableCell>{ad.link}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
+                    <a
+                      href={ad.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      title={ad.link}
+                    >
+                      {ad.link.length > 50 ? `${ad.link.substring(0, 50)}...` : ad.link}
+                    </a>
+                  </TableCell>
+                  <TableCell className="text-right space-x-1">
                     <ViewAdvertisementDialog advertisement={ad} />
                     <EditAdvertisementDialog
                       advertisement={ad}
@@ -160,7 +170,7 @@ export function AdvertisementTable() {
                     />
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-red-600 hover:bg-red-50 h-7 w-7">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>

@@ -68,7 +68,7 @@ export function EditMemberDialog({ member, onSave }: EditMemberDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="xs" className="h-7 w-7">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"

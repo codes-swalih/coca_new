@@ -29,7 +29,7 @@ export function ViewServiceDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="outline" size="xs" className="h-7 w-7">
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>

@@ -202,7 +202,7 @@ export default function ZoneManagementPage() {
   }
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-10">
       <div className="flex items-center gap-3">
         <div className="p-3 bg-primary/10 rounded-lg">
           <MapPin className="h-8 w-8 text-primary" />
@@ -214,7 +214,10 @@ export default function ZoneManagementPage() {
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5">
+        <Card 
+          className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5 cursor-pointer"
+          onClick={handleAddState}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-foreground group-hover:text-foreground">Total States</CardTitle>
             <MapPin className="h-5 w-5 text-primary group-hover:text-primary transition-colors" />
@@ -223,7 +226,14 @@ export default function ZoneManagementPage() {
             <div className="text-3xl font-bold text-foreground group-hover:text-foreground mb-1">{counts.states}</div>
             <p className="text-sm text-muted-foreground group-hover:text-muted-foreground mb-4">Geographical regions</p>
             <div className="flex gap-2">
-              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" size="sm" onClick={handleAddState}>
+              <Button 
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddState();
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add State
               </Button>
@@ -231,7 +241,10 @@ export default function ZoneManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5">
+        <Card 
+          className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5 cursor-pointer"
+          onClick={handleAddZone}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-foreground group-hover:text-foreground">Total Zones</CardTitle>
             <Globe className="h-5 w-5 text-primary group-hover:text-primary transition-colors" />
@@ -240,7 +253,14 @@ export default function ZoneManagementPage() {
             <div className="text-3xl font-bold text-foreground group-hover:text-foreground mb-1">{counts.zones}</div>
             <p className="text-sm text-muted-foreground group-hover:text-muted-foreground mb-4">Administrative zones</p>
             <div className="flex gap-2">
-              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" size="sm" onClick={handleAddZone}>
+              <Button 
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddZone();
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Zone
               </Button>
@@ -248,7 +268,10 @@ export default function ZoneManagementPage() {
           </CardContent>
         </Card>
 
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5">
+        <Card 
+          className="group hover:shadow-lg transition-all duration-200 hover:scale-[1.02] border-2 hover:border-primary/30 hover:bg-primary/5 cursor-pointer"
+          onClick={handleAddDistrict}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-foreground group-hover:text-foreground">Total Districts</CardTitle>
             <Building2 className="h-5 w-5 text-primary group-hover:text-primary transition-colors" />
@@ -257,7 +280,14 @@ export default function ZoneManagementPage() {
             <div className="text-3xl font-bold text-foreground group-hover:text-foreground mb-1">{counts.districts}</div>
             <p className="text-sm text-muted-foreground group-hover:text-muted-foreground mb-4">Local districts</p>
             <div className="flex gap-2">
-              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" size="sm" onClick={handleAddDistrict}>
+              <Button 
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddDistrict();
+                }}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add District
               </Button>

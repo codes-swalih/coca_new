@@ -76,7 +76,7 @@ export function ViewMemberDialog({ memberId }: ViewMemberDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="xs" className="h-7 w-7">
           <Eye className="h-4 w-4" />
         </Button>
       </DialogTrigger>
@@ -180,17 +180,36 @@ export function ViewMemberDialog({ memberId }: ViewMemberDialogProps) {
             <TabsContent value="testimonial">
               <Card>
                 <CardContent className="pt-6">
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-500 italic">
-                      {memberDetails.user_testimonial ? (
-                        <pre className="whitespace-pre-wrap">
-                          {JSON.stringify(memberDetails.user_testimonial, null, 2)}
-                        </pre>
-                      ) : (
-                        "No testimonial details available"
-                      )}
-                    </p>
-                  </div>
+                  {memberDetails.user_testimonial && 
+                   memberDetails.user_testimonial._id && 
+                   memberDetails.user_testimonial.memberId && 
+                   memberDetails.user_testimonial.__v !== undefined ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-center py-8 text-muted-foreground">
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-medium">No testimonial content</p>
+                          <p className="text-xs text-muted-foreground mt-1">This member hasn't provided a testimonial yet</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-muted-foreground">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                          <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-medium">No testimonial available</p>
+                        <p className="text-xs text-muted-foreground mt-1">This member hasn't provided a testimonial yet</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

@@ -57,8 +57,8 @@ export function ViewEventDialog({ eventId }: ViewEventDialogProps) {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          size="icon"
-          className="hover:bg-primary/10 transition-colors"
+          size="xs"
+          className="h-7 w-7"
         >
           <Eye className="h-4 w-4" />
         </Button>
