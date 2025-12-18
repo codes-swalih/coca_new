@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Trash2, Plus, BookOpen } from "lucide-react";
+import { Edit, Trash2, Plus, BookOpen, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -82,8 +82,16 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
   const [chaptersToDelete, setChaptersToDelete] = useState<Chapter | null>(null);
   const [activeTab, setActiveTab] = useState('list');
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isEditing = !!chapter || !!editingChapter;
+
+  const filteredChapters = chapters.filter((chapter) =>
+    chapter.chapterName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chapter.zone?.zoneName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chapter.district?.districtName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chapter.state?.stateName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (open) {
@@ -353,6 +361,16 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
                 </Button>
               </div>
 
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search chapters..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
               <Card>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
@@ -368,18 +386,18 @@ export function ChapterDialog({ open, onOpenChange, chapter, onSuccess }: Chapte
                         </tr>
                       </thead>
                       <tbody>
-                        {chapters.length === 0 ? (
+                        {filteredChapters.length === 0 ? (
                           <tr>
                             <td colSpan={6} className="text-center p-8 text-muted-foreground">
                               <div className="flex flex-col items-center gap-2">
                                 <BookOpen className="h-8 w-8 text-muted-foreground/50" />
-                                <p>No chapters found</p>
-                                <p className="text-sm">Add your first chapter to get started.</p>
+                                <p>{searchQuery ? 'No chapters match your search' : 'No chapters found'}</p>
+                                <p className="text-sm">{searchQuery ? 'Try a different search term.' : 'Add your first chapter to get started.'}</p>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          chapters.map((chapter) => (
+                          filteredChapters.map((chapter) => (
                             <tr key={chapter._id} className="border-b hover:bg-muted/30 transition-colors">
                               <td className="p-4 font-medium">{chapter.chapterName}</td>
                               <td className="p-4">{chapter.zone?.zoneName || 'N/A'}</td>

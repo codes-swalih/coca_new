@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Bell, User, LogOut } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, User, LogOut, Search, ChevronDown } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,14 +14,28 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
+import { useCommandPalette } from "@/components/command-palette";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [isMac, setIsMac] = useState(false);
   const router = useRouter();
   const { logout, user } = useAuth();
+  const { setOpen: setCommandOpen } = useCommandPalette();
+
+  useEffect(() => {
+    setIsMac(navigator.userAgent.toUpperCase().indexOf("MAC") >= 0);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -31,14 +44,19 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-[60px] items-center justify-between px-6">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-[60px] items-center justify-between px-6 border-b">
         <div className="flex flex-1 items-center gap-4">
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="md:w-[200px] lg:w-[300px]"
-          />
+          <button
+            onClick={() => setCommandOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 dark:hover:border-slate-500 transition-all md:w-[200px] lg:w-[300px]"
+          >
+            <Search className="h-4 w-4" />
+            <span>Search...</span>
+            <kbd className="ml-auto pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+              {isMac ? "⌘K" : "Ctrl+K"}
+            </kbd>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
@@ -47,16 +65,30 @@ export default function Header() {
             <Bell className="h-5 w-5" />
           </Button>
 
-          {/* Logout Dialog Trigger */}
-          <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogTrigger asChild>
+          {/* User Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-2">
                 <User className="h-5 w-5" />
                 {user && <span className="hidden md:inline">{user.username}</span>}
-                <LogOut className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
               </Button>
-            </AlertDialogTrigger>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setOpen(true)}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
+          {/* Logout Confirmation Dialog */}
+          <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

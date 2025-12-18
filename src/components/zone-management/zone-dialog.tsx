@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit, Trash2, Plus, Globe } from "lucide-react";
+import { Edit, Trash2, Plus, Globe, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -71,8 +71,15 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [zonesToDelete, setZonesToDelete] = useState<Zone | null>(null);
   const [activeTab, setActiveTab] = useState('list');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isEditing = !!zone;
+
+  const filteredZones = zones.filter((zone) =>
+    zone.zoneName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    zone.district?.districtName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    zone.state?.stateName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (open) {
@@ -286,6 +293,16 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
                 </Button>
               </div>
 
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search zones..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
               <Card>
                 <CardContent className="p-0">
                   <div className="overflow-x-auto">
@@ -300,18 +317,18 @@ export function ZoneDialog({ open, onOpenChange, zone, onSuccess }: ZoneDialogPr
                         </tr>
                       </thead>
                       <tbody>
-                        {zones.length === 0 ? (
+                        {filteredZones.length === 0 ? (
                           <tr>
                             <td colSpan={5} className="text-center p-8 text-muted-foreground">
                               <div className="flex flex-col items-center gap-2">
                                 <Globe className="h-8 w-8 text-muted-foreground/50" />
-                                <p>No zones found</p>
-                                <p className="text-sm">Add your first zone to get started.</p>
+                                <p>{searchQuery ? 'No zones match your search' : 'No zones found'}</p>
+                                <p className="text-sm">{searchQuery ? 'Try a different search term.' : 'Add your first zone to get started.'}</p>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          zones.map((zone) => (
+                          filteredZones.map((zone) => (
                             <tr key={zone._id} className="border-b hover:bg-muted/30 transition-colors">
                               <td className="p-4 font-medium">{zone.zoneName}</td>
                               <td className="p-4">{zone.district?.districtName || 'N/A'}</td>

@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Eye, Calendar, MapPin, User, Phone, Mail, Clock, CreditCard, Building, Search, Filter, X } from 'lucide-react';
+import { Eye, Calendar, MapPin, User, Phone, Mail, Clock, CreditCard, Building, Search, Filter, X, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { exportToCSV } from "@/lib/export-utils";
 
 interface Booking {
   _id: string;
@@ -203,9 +204,18 @@ export default function BookingsPage() {
     return true;
   });
 
-
-
-
+  // Export bookings to CSV
+  const handleExportBookings = () => {
+    const columns = [
+      { header: 'Name', accessor: 'clientName' as const },
+      { header: 'Type', accessor: 'typeOfFunction' as const },
+      { header: 'Contact', accessor: 'mobileNumber' as const },
+      { header: 'Date', accessor: 'startingDate' as const },
+    ];
+    
+    const filename = `bookings_export_${new Date().toISOString().split('T')[0]}`;
+    exportToCSV(filteredBookings, columns, filename);
+  };
 
   if (loading) {
     return (
@@ -230,6 +240,14 @@ export default function BookingsPage() {
             View and manage all service bookings
           </p>
         </div>
+        <Button
+          onClick={handleExportBookings}
+          disabled={filteredBookings.length === 0}
+          className="flex items-center gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Export Bookings
+        </Button>
       </div>
 
       {/* Search Bar and Filters */}

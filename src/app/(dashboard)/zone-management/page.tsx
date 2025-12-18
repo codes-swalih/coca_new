@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Globe, Building2, BookOpen, Plus, Edit } from "lucide-react";
+import { MapPin, Globe, Building2, BookOpen, Plus, Edit, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { StateDialog } from "@/components/zone-management/state-dialog";
 import { DistrictDialog } from "@/components/zone-management/district-dialog";
@@ -77,6 +78,17 @@ export default function ZoneManagementPage() {
   const [editingDistrict, setEditingDistrict] = useState<any>(null);
   const [editingZone, setEditingZone] = useState<any>(null);
   const [editingChapter, setEditingChapter] = useState<any>(null);
+
+  // Search state
+  const [chapterSearch, setChapterSearch] = useState('');
+
+  // Filtered chapters
+  const filteredChapters = chapters.filter((chapter) =>
+    chapter.chapterName?.toLowerCase().includes(chapterSearch.toLowerCase()) ||
+    chapter.zone?.zoneName?.toLowerCase().includes(chapterSearch.toLowerCase()) ||
+    chapter.district?.districtName?.toLowerCase().includes(chapterSearch.toLowerCase()) ||
+    chapter.state?.stateName?.toLowerCase().includes(chapterSearch.toLowerCase())
+  );
 
   // Handler functions for Add buttons
   const handleAddState = () => {
@@ -320,10 +332,21 @@ export default function ZoneManagementPage() {
       {/* All Chapters Table */}
       <Card className="shadow-sm border-2">
         <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-          <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            All Chapters
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-primary" />
+              All Chapters
+            </CardTitle>
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search chapters..."
+                value={chapterSearch}
+                onChange={(e) => setChapterSearch(e.target.value)}
+                className="pl-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 shadow-sm"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -339,18 +362,18 @@ export default function ZoneManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {chapters.length === 0 ? (
+                {filteredChapters.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center p-12 text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
                         <BookOpen className="h-12 w-12 text-muted-foreground/50" />
-                        <p className="text-lg font-medium">No chapters found</p>
-                        <p className="text-sm">Add your first chapter above to get started.</p>
+                        <p className="text-lg font-medium">{chapterSearch ? 'No chapters match your search' : 'No chapters found'}</p>
+                        <p className="text-sm">{chapterSearch ? 'Try a different search term.' : 'Add your first chapter above to get started.'}</p>
                       </div>
                     </td>
                   </tr>
                 ) : (
-                  chapters.map((chapter) => (
+                  filteredChapters.map((chapter) => (
                     <tr key={chapter._id} className="border-b hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-200 group">
                       <td className="p-4 font-semibold text-foreground group-hover:text-foreground">
                         {chapter.chapterName || 'N/A'}
