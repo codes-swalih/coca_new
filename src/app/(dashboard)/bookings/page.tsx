@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { DateRange } from 'react-day-picker';
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 interface Booking {
   _id: string;
@@ -208,16 +209,19 @@ export default function BookingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-lg text-muted-foreground">Loading bookings...</p>
+      <RouteGuard requiredPermission="booking_management">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-lg text-muted-foreground">Loading bookings...</p>
+          </div>
         </div>
-      </div>
+      </RouteGuard>
     );
   }
 
   return (
+    <RouteGuard requiredPermission="booking_management">
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -657,5 +661,6 @@ export default function BookingsPage() {
         </Dialog>
       )}
     </div>
+    </RouteGuard>
   );
 }

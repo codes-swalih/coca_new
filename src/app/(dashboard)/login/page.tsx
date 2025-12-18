@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminLogin() {
   const router = useRouter();
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,11 +30,11 @@ export default function AdminLogin() {
       const data = await res.json();
 
       if (data.status === "Success") {
-        localStorage.setItem("adminId", data.data._id);
+        // Use AuthContext login function to store auth data with permissions
+        login(data.data);
         toast.success("✅ Login Successful", {
           description: "You have successfully logged in.",
         });
-        // Optional redirect here
         router.push("/dashboard");
       } else {
         toast.error("Login Failed ❌", {

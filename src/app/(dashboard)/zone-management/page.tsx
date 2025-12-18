@@ -8,6 +8,7 @@ import { StateDialog } from "@/components/zone-management/state-dialog";
 import { DistrictDialog } from "@/components/zone-management/district-dialog";
 import { ZoneDialog } from "@/components/zone-management/zone-dialog";
 import { ChapterDialog } from "@/components/zone-management/chapter-dialog";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 interface Counts {
   states: number;
@@ -172,36 +173,39 @@ export default function ZoneManagementPage() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-8">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-primary/10 rounded-lg">
-            <MapPin className="h-8 w-8 text-primary" />
+      <RouteGuard requiredPermission="zone_management">
+        <div className="p-8 space-y-8">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-primary/10 rounded-lg">
+              <MapPin className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold tracking-tight text-foreground">Zone Management</h1>
+              <p className="text-lg text-muted-foreground mt-1">Manage your geographical hierarchy and administrative divisions</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-foreground">Zone Management</h1>
-            <p className="text-lg text-muted-foreground mt-1">Manage your geographical hierarchy and administrative divisions</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="border-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <div className="h-5 w-28 bg-muted rounded animate-pulse"></div>
+                  <div className="h-5 w-5 bg-muted rounded animate-pulse"></div>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-8 w-20 bg-muted rounded animate-pulse mb-2"></div>
+                  <div className="h-4 w-32 bg-muted rounded animate-pulse mb-4"></div>
+                  <div className="h-9 w-full bg-muted rounded animate-pulse"></div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="border-2">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="h-5 w-28 bg-muted rounded animate-pulse"></div>
-                <div className="h-5 w-5 bg-muted rounded animate-pulse"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 w-20 bg-muted rounded animate-pulse mb-2"></div>
-                <div className="h-4 w-32 bg-muted rounded animate-pulse mb-4"></div>
-                <div className="h-9 w-full bg-muted rounded animate-pulse"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+      </RouteGuard>
     );
   }
 
   return (
+    <RouteGuard requiredPermission="zone_management">
     <div className="p-8 space-y-10">
       <div className="flex items-center gap-3">
         <div className="p-3 bg-primary/10 rounded-lg">
@@ -403,5 +407,6 @@ export default function ZoneManagementPage() {
         onSuccess={handleSuccess}
       />
     </div>
+    </RouteGuard>
   );
 }

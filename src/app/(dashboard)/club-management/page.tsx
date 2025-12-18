@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 interface Club {
   _id: string;
@@ -160,18 +161,21 @@ export default function ClubManagementPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
+      <RouteGuard requiredPermission="club_management">
+        <div className="space-y-6 p-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
+          </div>
+          <div className="grid gap-4 md:grid-cols-1">
+            <div className="h-32 bg-muted animate-pulse rounded-lg"></div>
+          </div>
         </div>
-        <div className="grid gap-4 md:grid-cols-1">
-          <div className="h-32 bg-muted animate-pulse rounded-lg"></div>
-        </div>
-      </div>
+      </RouteGuard>
     );
   }
 
   return (
+    <RouteGuard requiredPermission="club_management">
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Club Management</h1>
@@ -611,5 +615,6 @@ export default function ClubManagementPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </RouteGuard>
   );
 }
