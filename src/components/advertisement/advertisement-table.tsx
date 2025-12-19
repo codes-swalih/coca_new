@@ -31,6 +31,8 @@ import { ViewAdvertisementDialog } from "./view-advertisement-dialog";
 
 interface Advertisement {
   _id: string;
+  title: string;
+  description: string;
   image: string;
   link: string;
 }
@@ -56,7 +58,9 @@ export function AdvertisementTable() {
       
       if (data.status === "Success") {
         const filteredAds = data.data.filter((ad: Advertisement) =>
-          ad.link.toLowerCase().includes(searchQuery.toLowerCase())
+          ad.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ad.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          ad.link?.toLowerCase().includes(searchQuery.toLowerCase())
         );
         setAdvertisements(filteredAds);
       } else {
@@ -124,6 +128,8 @@ export function AdvertisementTable() {
           <TableHeader>
             <TableRow>
               <TableHead>Image</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Link</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -131,13 +137,13 @@ export function AdvertisementTable() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">
+                <TableCell colSpan={5} className="text-center">
                   Loading...
                 </TableCell>
               </TableRow>
             ) : advertisements.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-center">
+                <TableCell colSpan={5} className="text-center">
                   No advertisements found.
                 </TableCell>
               </TableRow>
@@ -151,6 +157,14 @@ export function AdvertisementTable() {
                       className="h-20 w-20 object-cover rounded"
                     />
                   </TableCell>
+                  <TableCell className="font-medium">
+                    {ad.title || "N/A"}
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    <span className="line-clamp-2 text-sm text-muted-foreground">
+                      {ad.description || "N/A"}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <a
                       href={ad.link}
@@ -159,7 +173,7 @@ export function AdvertisementTable() {
                       className="text-blue-600 hover:text-blue-800 hover:underline"
                       title={ad.link}
                     >
-                      {ad.link.length > 50 ? `${ad.link.substring(0, 50)}...` : ad.link}
+                      {ad.link?.length > 30 ? `${ad.link.substring(0, 30)}...` : ad.link}
                     </a>
                   </TableCell>
                   <TableCell className="text-right space-x-1">

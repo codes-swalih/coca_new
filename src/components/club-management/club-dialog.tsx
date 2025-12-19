@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Edit, Trash2, Users, Check, ChevronDown, X } from "lucide-react";
+import { Users, Check, ChevronDown, X, Shield } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
@@ -43,6 +44,12 @@ interface Event {
   eventTitle: string;
   date: string;
   location: string;
+}
+
+interface Role {
+  _id: string;
+  title: string;
+  categories: string[];
 }
 
 interface Club {
@@ -81,20 +88,49 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
   const [clubManagerOpen, setClubManagerOpen] = useState(false);
   const [membersOpen, setMembersOpen] = useState(false);
   const [eventsOpen, setEventsOpen] = useState(false);
+  const [roleOpen, setRoleOpen] = useState(false);
   
   // Data for dropdowns
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+
+  // Admin account fields
+  const [createAdminAccount, setCreateAdminAccount] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminRole, setAdminRole] = useState('');
 
   const isEditing = !!club;
 
-  // Fetch members and events data
+  // Fetch members, events, and roles data
   useEffect(() => {
     if (open) {
       fetchMembers();
       fetchEvents();
+      fetchRoles();
     }
   }, [open]);
+
+  // Reset admin fields when manager changes or dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCreateAdminAccount(false);
+      setAdminUsername('');
+      setAdminPassword('');
+      setAdminRole('');
+    }
+  }, [open]);
+
+  // Auto-fill username when manager is selected and createAdminAccount is enabled
+  useEffect(() => {
+    if (createAdminAccount && clubManager) {
+      const selectedMember = members.find(m => m._id === clubManager);
+      if (selectedMember?.email) {
+        setAdminUsername(selectedMember.email);
+      }
+    }
+  }, [clubManager, createAdminAccount, members]);
 
   const fetchMembers = async () => {
     try {
@@ -136,6 +172,24 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
     } catch (error) {
       console.error("Error fetching events:", error);
     }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch('/api/admin/admin/createRole');
+      const data = await response.json();
+      
+      if (data?.status === "Success" && Array.isArray(data.data)) {
+        setRoles(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+    }
+  };
+
+  const getRoleName = (roleId: string) => {
+    const role = roles.find(r => r._id === roleId);
+    return role ? role.title : 'Unknown Role';
   };
 
   useEffect(() => {
@@ -216,6 +270,18 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
       return;
     }
 
+    // Validate admin account fields if enabled
+    if (createAdminAccount && !isEditing) {
+      if (!adminUsername.trim() || !adminPassword.trim() || !adminRole) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all admin account fields (Username, Password, and Role).",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const url = isEditing ? `/api/admin/clubs/${club._id}` : '/api/admin/clubs';
@@ -239,10 +305,49 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
       const data = await response.json();
 
       if (response.ok) {
-        toast({
-          title: isEditing ? "Club Updated" : "Club Created",
-          description: data.message || `Club ${isEditing ? 'updated' : 'created'} successfully.`,
-        });
+        // If admin account creation is enabled, create the admin
+        if (createAdminAccount && !isEditing) {
+          try {
+            const adminResponse = await fetch('/api/admin/admin/createAdmin', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username: adminUsername.trim(),
+                password: adminPassword.trim(),
+                role: adminRole,
+              }),
+            });
+
+            const adminData = await adminResponse.json();
+
+            if (adminResponse.ok) {
+              toast({
+                title: "Success",
+                description: "Club created and admin account set up successfully.",
+              });
+            } else {
+              toast({
+                title: "Partial Success",
+                description: `Club created, but admin account failed: ${adminData.message}`,
+                variant: "destructive",
+              });
+            }
+          } catch (adminError) {
+            toast({
+              title: "Partial Success",
+              description: "Club created, but admin account creation failed.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: isEditing ? "Club Updated" : "Club Created",
+            description: data.message || `Club ${isEditing ? 'updated' : 'created'} successfully.`,
+          });
+        }
+
         onSuccess();
         if (!isEditing) {
           setClubName('');
@@ -251,6 +356,10 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
           setSelectedMembers([]);
           setSelectedEvents([]);
           setImage('');
+          setCreateAdminAccount(false);
+          setAdminUsername('');
+          setAdminPassword('');
+          setAdminRole('');
         }
         onOpenChange(false);
       } else {
@@ -324,7 +433,7 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -335,7 +444,7 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="flex-1 overflow-y-auto pr-2">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -413,6 +522,105 @@ export function ClubDialog({ open, onOpenChange, club, onSuccess }: ClubDialogPr
                   </PopoverContent>
                 </Popover>
               </div>
+
+              {/* Admin Account Section - Only show when creating new club and manager is selected */}
+              {!isEditing && clubManager && (
+                <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="createAdmin"
+                      checked={createAdminAccount}
+                      onCheckedChange={(checked) => setCreateAdminAccount(checked === true)}
+                    />
+                    <Label htmlFor="createAdmin" className="flex items-center gap-2 cursor-pointer">
+                      <Shield className="h-4 w-4 text-primary" />
+                      Create Admin Account for Manager
+                    </Label>
+                  </div>
+
+                  {createAdminAccount && (
+                    <div className="space-y-4 pt-2">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="adminUsername">Username *</Label>
+                          <Input
+                            id="adminUsername"
+                            value={adminUsername}
+                            onChange={(e) => setAdminUsername(e.target.value)}
+                            placeholder="Enter username (email recommended)"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="adminPassword">Password *</Label>
+                          <Input
+                            id="adminPassword"
+                            type="password"
+                            value={adminPassword}
+                            onChange={(e) => setAdminPassword(e.target.value)}
+                            placeholder="Enter password"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Role *</Label>
+                        <Popover open={roleOpen} onOpenChange={setRoleOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={roleOpen}
+                              className="w-full justify-between"
+                            >
+                              {adminRole ? getRoleName(adminRole) : "Select role..."}
+                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-full p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search roles..." className="h-9" />
+                              <CommandEmpty>No role found.</CommandEmpty>
+                              <CommandList>
+                                <ScrollArea className="h-48">
+                                  <CommandGroup>
+                                    {roles.map((role) => (
+                                      <CommandItem
+                                        key={role._id}
+                                        value={role.title}
+                                        onSelect={() => {
+                                          setAdminRole(role._id);
+                                          setRoleOpen(false);
+                                        }}
+                                        className="cursor-pointer"
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            adminRole === role._id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{role.title}</span>
+                                          <span className="text-sm text-muted-foreground">
+                                            {role.categories?.join(', ') || 'No permissions'}
+                                          </span>
+                                        </div>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </ScrollArea>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This will create an admin account allowing the manager to log in to the admin panel.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Members</Label>

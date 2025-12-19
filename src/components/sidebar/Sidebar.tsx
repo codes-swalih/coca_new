@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Users, LayoutDashboard, Calendar, ChartBar, Workflow, MapPin, Building2, BookOpen, Shield, LucideIcon } from "lucide-react";
+import { Users, LayoutDashboard, Calendar, ChartBar, Workflow, MapPin, Building2, BookOpen, Shield, MessageSquare, LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -20,6 +20,7 @@ const iconMap: Record<string, LucideIcon> = {
   MapPin,
   BookOpen,
   Shield,
+  MessageSquare,
 };
 
 export function Sidebar() {

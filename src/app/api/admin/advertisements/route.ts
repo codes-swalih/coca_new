@@ -3,18 +3,22 @@ import { connectToMongoDB } from "../../../../../libs/mongodb";
 import advertisements from "../../../../app/models/admin/Advertisement";
 
 interface AdvertisementRequest {
+  title: string;
+  description: string;
   image: string;
   link: string;
 }
 
 export const POST = async (req: Request) => {
   const body: AdvertisementRequest = await req.json();
-  const { image, link } = body;
+  const { title, description, image, link } = body;
   
   try {
     await connectToMongoDB();
     
     const newAdvertisement = await advertisements.create({
+      title,
+      description,
       image,
       link,
     });

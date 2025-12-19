@@ -43,6 +43,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: "/services", label: "Services", icon: "Workflow", permission: "club_management" },
   { path: "/zone-management", label: "Zone Management", icon: "MapPin", permission: "zone_management" },
   { path: "/bookings", label: "Bookings", icon: "BookOpen", permission: "booking_management" },
+  { path: "/enquiries", label: "Enquiries", icon: "MessageSquare", permission: "booking_management" },
   { path: "/role-management", label: "Role Management", icon: "Shield", permission: "role_management" },
 ];
 
@@ -58,6 +59,7 @@ export const ROUTE_PERMISSIONS: Record<string, Permission> = {
   "/services": "club_management",
   "/zone-management": "zone_management",
   "/bookings": "booking_management",
+  "/enquiries": "booking_management",
   "/role-management": "role_management",
 };
 

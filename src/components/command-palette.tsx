@@ -20,6 +20,7 @@ import {
   Megaphone,
   Briefcase,
   BookOpen,
+  MessageSquare,
   LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +42,7 @@ const allNavigationItems: NavItem[] = [
   { name: "Services", href: "/services", icon: Briefcase, description: "Manage available services" },
   { name: "Advertisement", href: "/advertisement", icon: Megaphone, description: "Manage advertisements" },
   { name: "Bookings", href: "/bookings", icon: BookOpen, description: "View and manage bookings" },
+  { name: "Enquiries", href: "/enquiries", icon: MessageSquare, description: "View and manage customer enquiries" },
   { name: "Role Management", href: "/role-management", icon: Settings, description: "Manage roles and permissions" },
 ];
 

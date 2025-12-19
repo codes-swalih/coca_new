@@ -13,6 +13,8 @@ import { Eye } from "lucide-react";
 
 interface Advertisement {
   _id: string;
+  title: string;
+  description: string;
   image: string;
   link: string;
 }
@@ -38,6 +40,18 @@ export function ViewAdvertisementDialog({
           <DialogTitle>View Advertisement</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <div>
+            <h4 className="font-medium">Title</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {advertisement.title || "N/A"}
+            </p>
+          </div>
+          <div>
+            <h4 className="font-medium">Description</h4>
+            <p className="text-sm text-muted-foreground mt-1">
+              {advertisement.description || "N/A"}
+            </p>
+          </div>
           <div>
             <h4 className="font-medium">Advertisement Image</h4>
             <img

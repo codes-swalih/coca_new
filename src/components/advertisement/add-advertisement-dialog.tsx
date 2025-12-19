@@ -23,6 +23,8 @@ export function AddAdvertisementDialog({ onSuccess }: AddAdvertisementDialogProp
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    title: "",
+    description: "",
     image: "",
     link: "",
   });
@@ -74,7 +76,7 @@ export function AddAdvertisementDialog({ onSuccess }: AddAdvertisementDialogProp
           description: "Advertisement created successfully",
         });
         setOpen(false);
-        setFormData({ image: "", link: "" });
+        setFormData({ title: "", description: "", image: "", link: "" });
         onSuccess();
       } else {
         toast({
@@ -109,6 +111,29 @@ export function AddAdvertisementDialog({ onSuccess }: AddAdvertisementDialogProp
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="title">Title</label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder="Enter advertisement title"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="description">Description</label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="Enter advertisement description"
+            />
+          </div>
           <div className="space-y-2">
             <label htmlFor="image">Advertisement Image</label>
             <Input

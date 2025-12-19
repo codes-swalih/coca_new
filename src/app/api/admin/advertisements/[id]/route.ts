@@ -3,6 +3,8 @@ import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import advertisements from "../../../../../app/models/admin/Advertisement";
 
 interface AdvertisementUpdateRequest {
+  title: string;
+  description: string;
   image: string;
   link: string;
 }
@@ -13,7 +15,7 @@ export const PUT = async (
 ) => {
   const { id } = params;
   const body: AdvertisementUpdateRequest = await req.json();
-  const { image, link } = body;
+  const { title, description, image, link } = body;
   
   try {
     await connectToMongoDB();
@@ -21,6 +23,8 @@ export const PUT = async (
     const updatedAdvertisement = await advertisements.findByIdAndUpdate(
       id,
       {
+        title,
+        description,
         image,
         link,
       },
