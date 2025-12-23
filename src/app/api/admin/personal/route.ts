@@ -6,6 +6,7 @@ import userBusines from "../../../../app/models/admin/UserBusiness";
 import userservice from "../../../../app/models/admin/UserSerivce";
 import usersTestimonial from "@/app/models/admin/UserTestimonial";
 import Zone from "@/app/models/admin/Zone";
+import Chapter from "@/app/models/admin/Chapter";
 
 interface UserPersonalRequest {
   nameOfBusinessOwner: string;
@@ -47,12 +48,12 @@ export const POST = async (req: Request) => {
     await connectToMongoDB();
 
     if (chapter) {
-      const zoneExists = await Zone.findById(chapter);
-      if (!zoneExists) {
+      const chapterExist = await Chapter.findById(chapter);
+      if (!chapterExist) {
         return NextResponse.json(
           {
             status: "Failed",
-            message: "Zone not found!",
+            message: "chapter not found!",
           },
           { status: 404 }
         );

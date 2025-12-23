@@ -21,7 +21,7 @@ const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
   fcmToken: { type: String },
   chapter: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "zone",
+    ref: "chapter",
   },
 });
 

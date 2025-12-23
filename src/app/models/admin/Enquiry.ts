@@ -15,16 +15,16 @@ interface IEnquirySchema extends Document {
 
 
 const EnquirySchema: Schema<IEnquirySchema> = new Schema({
-  status: { type: String, required: true },
-  name: { type: String, required: true },
-  phone: { type: String, required: true },
-  secondaryPhone: { type: String, required: true },
-  relation: { type: String, required: true },
-  date: { type: String, required: true },
-  location: { type: String, required: true },
-  email: { type: String, required: true },
-  category: { type: String, required: true },
-  memberId: { type: String, required: true },
+  status: { type: String },
+  name: { type: String },
+  phone: { type: String },
+  secondaryPhone: { type: String },
+  relation: { type: String },
+  date: { type: String },
+  location: { type: String },
+  email: { type: String },
+  category: { type: String },
+  memberId: { type: String },
 });
 
 const enquiry: Model<IEnquirySchema> =

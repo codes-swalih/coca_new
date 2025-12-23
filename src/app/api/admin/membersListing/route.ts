@@ -17,7 +17,8 @@ export const GET = async (req: Request) => {
 
     const memberPersonal = await userPersonal
       .find()
-      .sort({ nameOfBusinessOwner: 1 })
+      .sort({ createdAt: -1 })  
+      .populate("chapter")
       .skip(skip)
       .limit(limit);
 

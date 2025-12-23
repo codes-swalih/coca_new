@@ -71,6 +71,7 @@ export const POST = async (req: Request) => {
     const isAlreadUploaded = await bookings.findOne({
       startingDate: startingDate,
       endingDate: endingDate,
+      memberId: memberId,
     });
     if (isAlreadUploaded) {
       return NextResponse.json({
