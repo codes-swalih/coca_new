@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const memberFormSchema = z.object({
   nameOfBusinessOwner: z.string().min(2, "Name must be at least 2 characters"),
@@ -14,6 +15,7 @@ const memberFormSchema = z.object({
   phone: z.string().min(10, "Phone number must be at least 10 characters"),
   secondaryPhone: z.string().min(10, "Secondary phone number must be at least 10 characters"),
   email: z.string().email("Invalid email address"),
+  chapter: z.string().min(1, "Please select a chapter"),
 });
 
 type MemberFormValues = z.infer<typeof memberFormSchema>;
@@ -22,8 +24,15 @@ interface AddMemberDialogProps {
   onAdd: (member: MemberFormValues) => Promise<void>;
 }
 
+interface Chapter {
+  _id: string;
+  chapterName: string;
+}
+
 export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
   const [open, setOpen] = useState(false);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [loadingChapters, setLoadingChapters] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<MemberFormValues>({
@@ -33,8 +42,35 @@ export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
       designation: "",
       phone: "",
       email: "",
+      chapter: "",
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      fetchChapters();
+    }
+  }, [open]);
+
+  const fetchChapters = async () => {
+    setLoadingChapters(true);
+    try {
+      const response = await fetch("/api/admin/chapter");
+      const data = await response.json();
+      if (data.status === "Success") {
+        setChapters(data.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching chapters:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load chapters",
+      });
+    } finally {
+      setLoadingChapters(false);
+    }
+  };
 
   const onSubmit = async (data: MemberFormValues) => {
     try {
@@ -122,6 +158,30 @@ export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
                   <FormControl>
                     <Input {...field} type="email" />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="chapter"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chapter</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={loadingChapters ? "Loading chapters..." : "Select a chapter"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {chapters.map((chapter) => (
+                        <SelectItem key={chapter._id} value={chapter._id}>
+                          {chapter.chapterName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

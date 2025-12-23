@@ -11,12 +11,45 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Filter, X } from "lucide-react";
 import { EditMemberDialog } from "./edit-member-dialog";
 import { AddMemberDialog } from "./add-member-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { ViewMemberDialog } from "./view-member-dialog";
+
+interface State {
+  _id: string;
+  stateName: string;
+}
+
+interface District {
+  _id: string;
+  districtName: string;
+  state: string | { _id: string; stateName: string };
+}
+
+interface Zone {
+  _id: string;
+  zoneName: string;
+  district: string | { _id: string; districtName: string };
+  state: string | { _id: string; stateName: string };
+}
+
+interface Chapter {
+  _id: string;
+  chapterName: string;
+  zone: string | { _id: string; zoneName: string };
+  district: string | { _id: string; districtName: string };
+  state: string | { _id: string; stateName: string };
+}
 
 interface Member {
   member_personal_detail: {
@@ -27,6 +60,7 @@ interface Member {
     memberId: string;
     secondaryPhone: string;
     _id: string;
+    chapter?: string | { _id: string; chapterName: string; zone?: { _id: string }; };
   };
   member_business_detail: {
     nameOfBusiness: string;
@@ -42,33 +76,182 @@ export function MembersTable() {
   const [totalPages, setTotalPages] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Filter states
+  const [states, setStates] = useState<State[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+
+  // Selected filter values
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedZone, setSelectedZone] = useState<string>("");
+  const [selectedChapter, setSelectedChapter] = useState<string>("");
+
+  // Filtered options based on selections
+  const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
+  const [filteredZones, setFilteredZones] = useState<Zone[]>([]);
+  const [filteredChapters, setFilteredChapters] = useState<Chapter[]>([]);
+
+  // Show/hide filters
+  const [showFilters, setShowFilters] = useState(false);
+
   const { toast } = useToast();
 
+  // Fetch all filter data on mount
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      try {
+        const [statesRes, districtsRes, zonesRes, chaptersRes] = await Promise.all([
+          fetch("/api/admin/state"),
+          fetch("/api/admin/district"),
+          fetch("/api/admin/zone"),
+          fetch("/api/admin/chapter"),
+        ]);
+
+        const [statesData, districtsData, zonesData, chaptersData] = await Promise.all([
+          statesRes.json(),
+          districtsRes.json(),
+          zonesRes.json(),
+          chaptersRes.json(),
+        ]);
+
+        if (statesData.status === "Success") setStates(statesData.data);
+        if (districtsData.status === "Success") setDistricts(districtsData.data);
+        if (zonesData.status === "Success") setZones(zonesData.data);
+        if (chaptersData.status === "Success") setChapters(chaptersData.data);
+      } catch (error) {
+        console.error("Error fetching filter data:", error);
+      }
+    };
+    fetchFilterData();
+  }, []);
+
+  // Update filtered districts when state changes
+  useEffect(() => {
+    if (selectedState) {
+      const filtered = districts.filter((d) => {
+        const stateId = typeof d.state === "object" && d.state ? d.state._id : d.state;
+        return stateId === selectedState;
+      });
+      setFilteredDistricts(filtered);
+    } else {
+      setFilteredDistricts([]);
+    }
+    setSelectedDistrict("");
+    setSelectedZone("");
+    setSelectedChapter("");
+  }, [selectedState, districts]);
+
+  // Update filtered zones when district changes
+  useEffect(() => {
+    if (selectedDistrict) {
+      const filtered = zones.filter((z) => {
+        const districtId = typeof z.district === "object" && z.district ? z.district._id : z.district;
+        return districtId === selectedDistrict;
+      });
+      setFilteredZones(filtered);
+    } else {
+      setFilteredZones([]);
+    }
+    setSelectedZone("");
+    setSelectedChapter("");
+  }, [selectedDistrict, zones]);
+
+  // Update filtered chapters when zone changes
+  useEffect(() => {
+    if (selectedZone) {
+      const filtered = chapters.filter((c) => {
+        const zoneId = typeof c.zone === "object" && c.zone ? c.zone._id : c.zone;
+        return zoneId === selectedZone;
+      });
+      setFilteredChapters(filtered);
+    } else {
+      setFilteredChapters([]);
+    }
+    setSelectedChapter("");
+  }, [selectedZone, chapters]);
+
+  // Fetch members when search or filters change
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchMembers(1);
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, selectedState, selectedDistrict, selectedZone, selectedChapter]);
 
   const fetchMembers = async (page: number) => {
     try {
       let url = searchQuery
         ? `/api/admin/searchMember?keyword=${encodeURIComponent(searchQuery)}`
-        : `/api/admin/membersListing?page=${page}&limit=10`;
+        : `/api/admin/membersListing?page=${page}&limit=100`; // Fetch more for filtering
 
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (data.status === "Success" || data.data) {
-        setMembers(data.data);
-        // Only set pagination if not in search mode
-        if (!searchQuery) {
-          setTotalPages(data.pagination.totalPages);
+        let filteredMembers = data.data;
+
+        // Apply filters based on chapter hierarchy
+        if (selectedChapter) {
+          filteredMembers = filteredMembers.filter((m: Member) => {
+            const chapterId = typeof m.member_personal_detail.chapter === "object" && m.member_personal_detail.chapter
+              ? m.member_personal_detail.chapter._id
+              : m.member_personal_detail.chapter;
+            return chapterId === selectedChapter;
+          });
+        } else if (selectedZone) {
+          filteredMembers = filteredMembers.filter((m: Member) => {
+            if (!m.member_personal_detail.chapter) return false;
+            const chapter = chapters.find(c => {
+              const chapterId = typeof m.member_personal_detail.chapter === "object" && m.member_personal_detail.chapter
+                ? m.member_personal_detail.chapter._id
+                : m.member_personal_detail.chapter;
+              return c._id === chapterId;
+            });
+            if (!chapter) return false;
+            const zoneId = typeof chapter.zone === "object" && chapter.zone ? chapter.zone._id : chapter.zone;
+            return zoneId === selectedZone;
+          });
+        } else if (selectedDistrict) {
+          filteredMembers = filteredMembers.filter((m: Member) => {
+            if (!m.member_personal_detail.chapter) return false;
+            const chapter = chapters.find(c => {
+              const chapterId = typeof m.member_personal_detail.chapter === "object" && m.member_personal_detail.chapter
+                ? m.member_personal_detail.chapter._id
+                : m.member_personal_detail.chapter;
+              return c._id === chapterId;
+            });
+            if (!chapter) return false;
+            const districtId = typeof chapter.district === "object" && chapter.district ? chapter.district._id : chapter.district;
+            return districtId === selectedDistrict;
+          });
+        } else if (selectedState) {
+          filteredMembers = filteredMembers.filter((m: Member) => {
+            if (!m.member_personal_detail.chapter) return false;
+            const chapter = chapters.find(c => {
+              const chapterId = typeof m.member_personal_detail.chapter === "object" && m.member_personal_detail.chapter
+                ? m.member_personal_detail.chapter._id
+                : m.member_personal_detail.chapter;
+              return c._id === chapterId;
+            });
+            if (!chapter) return false;
+            const stateId = typeof chapter.state === "object" && chapter.state ? chapter.state._id : chapter.state;
+            return stateId === selectedState;
+          });
+        }
+
+        setMembers(filteredMembers);
+
+        // For filtered results, show all on one page for simplicity
+        if (selectedState || selectedDistrict || selectedZone || selectedChapter) {
+          setTotalPages(1);
+          setCurrentPage(1);
+        } else if (!searchQuery) {
+          setTotalPages(data.pagination?.totalPages || 1);
           setCurrentPage(page);
         } else {
-          // For search results, we show all results on one page
           setTotalPages(1);
           setCurrentPage(1);
         }
@@ -90,6 +273,15 @@ export function MembersTable() {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedState("");
+    setSelectedDistrict("");
+    setSelectedZone("");
+    setSelectedChapter("");
+  };
+
+  const hasActiveFilters = selectedState || selectedDistrict || selectedZone || selectedChapter;
+
   const handleEdit = async (member: Member) => {
     try {
       const response = await fetch(`/api/admin/personal/${member.member_personal_detail._id}`, {
@@ -102,7 +294,8 @@ export function MembersTable() {
           designation: member.member_personal_detail.designation,
           phone: member.member_personal_detail.phone,
           email: member.member_personal_detail.email,
-          secondaryPhone: member.member_personal_detail.secondaryPhone || ""
+          secondaryPhone: member.member_personal_detail.secondaryPhone || "",
+          chapter: member.member_personal_detail.chapter
         }),
       });
 
@@ -172,7 +365,8 @@ export function MembersTable() {
           designation: memberData.designation,
           phone: memberData.phone,
           secondaryPhone: memberData.secondaryPhone || "", // Adding required secondaryPhone field
-          email: memberData.email
+          email: memberData.email,
+          chapter: memberData.chapter
         }),
       });
 
@@ -183,7 +377,9 @@ export function MembersTable() {
           title: "Success",
           description: "Member added successfully",
         });
-        fetchMembers(currentPage);
+        // Go to page 1 to see the newly added member
+        setCurrentPage(1);
+        fetchMembers(1);
       } else {
         toast({
           variant: "destructive",
@@ -202,15 +398,128 @@ export function MembersTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <Input
           placeholder="Search members..."
           className="max-w-sm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <AddMemberDialog onAdd={handleAdd} />
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+          </Button>
+          <AddMemberDialog onAdd={handleAdd} />
+        </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/30">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* State Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">State</label>
+              <Select value={selectedState} onValueChange={setSelectedState}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select state" />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map((state) => (
+                    <SelectItem key={state._id} value={state._id}>
+                      {state.stateName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* District Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">District</label>
+              <Select
+                value={selectedDistrict}
+                onValueChange={setSelectedDistrict}
+                disabled={!selectedState}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={selectedState ? "Select district" : "Select state first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredDistricts.map((district) => (
+                    <SelectItem key={district._id} value={district._id}>
+                      {district.districtName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Zone Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Zone</label>
+              <Select
+                value={selectedZone}
+                onValueChange={setSelectedZone}
+                disabled={!selectedDistrict}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={selectedDistrict ? "Select zone" : "Select district first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredZones.map((zone) => (
+                    <SelectItem key={zone._id} value={zone._id}>
+                      {zone.zoneName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Chapter Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Chapter</label>
+              <Select
+                value={selectedChapter}
+                onValueChange={setSelectedChapter}
+                disabled={!selectedZone}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={selectedZone ? "Select chapter" : "Select zone first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredChapters.map((chapter) => (
+                    <SelectItem key={chapter._id} value={chapter._id}>
+                      {chapter.chapterName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {members.length} members
+              </p>
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear Filters
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="rounded-md border">
         <Table>
@@ -227,7 +536,7 @@ export function MembersTable() {
             {members.map((member) => {
               // Helper functions for formatting
               const formatName = (name: string) => {
-                return name.split(' ').map(word => 
+                return name.split(' ').map(word =>
                   word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
                 ).join(' ');
               };

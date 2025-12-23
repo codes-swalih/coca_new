@@ -2,7 +2,7 @@ import userPersonal from "@/app/models/admin/UserPersonal";
 import { connectToMongoDB } from "../../../../../../libs/mongodb";
 import { NextResponse } from "next/server";
 import Service from "../../../../models/admin/services";
-import Zone from "@/app/models/admin/Zone";
+import Chapter from "@/app/models/admin/Chapter";
 
 interface memberUpdatedPersonalRequest {
   nameOfBusinessOwner: string;
@@ -34,12 +34,12 @@ export const PUT = async (
     await connectToMongoDB();
 
     if (chapter) {
-      const zoneExists = await Zone.findById(chapter);
-      if (!zoneExists) {
+      const chapterExists = await Chapter.findById(chapter);
+      if (!chapterExists) {
         return NextResponse.json(
           {
             status: "Failed",
-            message: "Zone not found!",
+            message: "Chapter not found!",
           },
           { status: 404 }
         );
