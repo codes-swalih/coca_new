@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
-import Chapter from "./Chapter";
+import "@/app/models/admin/Chapter";
+
 
 interface IUserPersonalSchema extends Document {
   nameOfBusinessOwner: string;
