@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
+import Chapter from "./Chapter";
 
 interface IUserPersonalSchema extends Document {
   nameOfBusinessOwner: string;
