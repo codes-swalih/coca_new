@@ -8,6 +8,7 @@ interface IMember {
 }
 
 interface IAssociation {
+  programTitle: string;
   members: IMember[];
   startDate: string;
   endDate: string;
