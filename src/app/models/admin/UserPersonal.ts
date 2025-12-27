@@ -1,9 +1,9 @@
 import mongoose, { Document, Schema, Model } from "mongoose";
 import "@/app/models/admin/Chapter";
 
-
 interface IUserPersonalSchema extends Document {
   nameOfBusinessOwner: string;
+  businessName: string;
   designation: string;
   phone: string;
   secondaryPhone: string;
@@ -15,6 +15,7 @@ interface IUserPersonalSchema extends Document {
 
 const UserPersonalSchema: Schema<IUserPersonalSchema> = new Schema({
   nameOfBusinessOwner: { type: String },
+  businessName: { type: String },
   designation: { type: String },
   phone: { type: String },
   secondaryPhone: { type: String },

@@ -8,6 +8,7 @@ import UsersTestimonial from "../../../../app/models/admin/UserTestimonial";
 
 interface UserPersonalRequest {
   nameOfBusinessOwner: string;
+  businessName: string;
   designation: string;
   phone: string;
   secondaryPhone: string;
@@ -20,11 +21,12 @@ export const POST = async (req: Request) => {
 
     const body: UserPersonalRequest = await req.json();
 
-    const { nameOfBusinessOwner, designation, phone, secondaryPhone, email } =
+    const { nameOfBusinessOwner, designation, phone, secondaryPhone, email, businessName } =
       body;
 
     if (
       !nameOfBusinessOwner ||
+      !businessName ||
       !designation ||
       !phone ||
       !secondaryPhone ||
@@ -53,6 +55,7 @@ export const POST = async (req: Request) => {
 
     const newMember = await userPersonal.create({
       nameOfBusinessOwner,
+      businessName,
       designation,
       phone,
       secondaryPhone,

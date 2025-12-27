@@ -5,6 +5,7 @@ import Service from "../../../../models/admin/services";
 
 interface memberUpdatedPersonalRequest {
   nameOfBusinessOwner: string;
+  businessName: string;
   designation: string;
   phone: string;
   secondaryPhone: string;
@@ -19,7 +20,7 @@ export const PUT = async (
 
   const body: memberUpdatedPersonalRequest = await req.json();
 
-  const { nameOfBusinessOwner, designation, phone, secondaryPhone, email } =
+  const { nameOfBusinessOwner, designation, phone, secondaryPhone, email, businessName } =
     body;
 
   try {
@@ -27,7 +28,7 @@ export const PUT = async (
 
     const updatingMemberPersonalDetails = await userPersonal.findByIdAndUpdate(
       id,
-      { nameOfBusinessOwner, designation, phone, secondaryPhone, email },
+      { nameOfBusinessOwner, designation, phone, secondaryPhone, email, businessName },
       { new: true }
     );
 

@@ -6,6 +6,7 @@ import Chapter from "@/app/models/admin/Chapter";
 
 interface memberUpdatedPersonalRequest {
   nameOfBusinessOwner: string;
+  businessName: string;
   designation: string;
   phone: string;
   secondaryPhone: string;
@@ -23,6 +24,7 @@ export const PUT = async (
 
   const {
     nameOfBusinessOwner,
+    businessName,
     designation,
     phone,
     secondaryPhone,
@@ -51,6 +53,7 @@ export const PUT = async (
       {
         nameOfBusinessOwner,
         designation,
+        businessName,
         phone,
         secondaryPhone,
         email,

@@ -10,6 +10,7 @@ import Chapter from "@/app/models/admin/Chapter";
 
 interface UserPersonalRequest {
   nameOfBusinessOwner: string;
+  businessName: string;
   designation: string;
   phone: string;
   secondaryPhone: string;
@@ -25,6 +26,7 @@ export const POST = async (req: Request) => {
 
     const {
       nameOfBusinessOwner,
+      businessName,
       designation,
       phone,
       secondaryPhone,
@@ -35,6 +37,7 @@ export const POST = async (req: Request) => {
     if (
       !nameOfBusinessOwner ||
       !designation ||
+      !businessName ||
       !phone ||
       !secondaryPhone ||
       !email
@@ -75,6 +78,7 @@ export const POST = async (req: Request) => {
 
     const newMember = await userPersonal.create({
       nameOfBusinessOwner,
+      businessName,
       designation,
       phone,
       secondaryPhone,
