@@ -1,4 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import District from "./District";
+import State from "./State";
+import Zone from "./Zone";
 
 interface IChapterSchema extends Document {
   chapterName: string;

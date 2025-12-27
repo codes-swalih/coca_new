@@ -7,6 +7,7 @@ interface IMember {
 }
 
 interface IAssociation {
+  programTitle: string;
   members: IMember[];
   startDate: string;
   endDate: string;
@@ -44,6 +45,7 @@ const MemberSchema = new Schema({
 });
 
 const AssociationSchema = new Schema({
+  programTitle: { type: String, required: true },
   members: { type: [MemberSchema], required: true },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
@@ -54,7 +56,7 @@ const AssociationSchema = new Schema({
 const BookingSchema: Schema<IBookingModel> = new Schema({
   bookingId: { type: String },
   clientName: { type: String },
-  startingDate: { type: String},
+  startingDate: { type: String },
   endingDate: { type: String },
   mobileNumber: { type: String },
   emailId: { type: String },
@@ -64,7 +66,7 @@ const BookingSchema: Schema<IBookingModel> = new Schema({
   groomName: { type: String },
   brideName: { type: String },
   associatedProgram: { type: [AssociationSchema] },
-  totalBudget: { type: String},
+  totalBudget: { type: String },
   advanceAmount: { type: String },
   workStatus: { type: String },
   eventDayPayment: { type: String },
@@ -74,7 +76,5 @@ const BookingSchema: Schema<IBookingModel> = new Schema({
   dayOrNight: { type: Boolean },
 });
 
-const bookings: Model<IBookingModel> =
-  mongoose.models.bookings || mongoose.model("bookings", BookingSchema);
-
-export default bookings;
+export default mongoose.models.bookings ??
+  mongoose.model("bookings", BookingSchema);
