@@ -295,7 +295,8 @@ export function MembersTable() {
           phone: member.member_personal_detail.phone,
           email: member.member_personal_detail.email,
           secondaryPhone: member.member_personal_detail.secondaryPhone || "",
-          chapter: member.member_personal_detail.chapter
+          chapter: member.member_personal_detail.chapter,
+          businessName: member.member_business_detail?.nameOfBusiness
         }),
       });
 
@@ -366,7 +367,8 @@ export function MembersTable() {
           phone: memberData.phone,
           secondaryPhone: memberData.secondaryPhone || "", // Adding required secondaryPhone field
           email: memberData.email,
-          chapter: memberData.chapter
+          chapter: memberData.chapter,
+          businessName: memberData.businessName
         }),
       });
 

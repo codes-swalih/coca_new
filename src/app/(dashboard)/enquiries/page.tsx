@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { RouteGuard } from "@/components/auth/RouteGuard";
 import { exportToCSV } from "@/lib/export-utils";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 
 interface Enquiry {
   _id: string;
@@ -41,6 +43,7 @@ export default function EnquiriesPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   useEffect(() => {
     fetchEnquiries();
@@ -76,6 +79,7 @@ export default function EnquiriesPage() {
     setStatusFilter("all");
     setCategoryFilter("all");
     setLocationFilter("all");
+    setDateRange(undefined);
     setSearchQuery("");
   };
 
@@ -84,6 +88,7 @@ export default function EnquiriesPage() {
     statusFilter !== "all" ||
     categoryFilter !== "all" ||
     locationFilter !== "all" ||
+    dateRange !== undefined ||
     searchQuery;
 
   const filteredEnquiries = enquiries.filter((enquiry) => {
@@ -113,6 +118,24 @@ export default function EnquiriesPage() {
     // Location filter
     if (locationFilter !== "all" && enquiry.location !== locationFilter) {
       return false;
+    }
+
+    // Date range filter
+    if (dateRange?.from || dateRange?.to) {
+      const parseDate = (dateStr: string) => {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? null : date;
+      };
+
+      const enquiryDate = parseDate(enquiry.date);
+      if (!enquiryDate) return false;
+
+      const filterStart = dateRange.from ? new Date(dateRange.from.setHours(0, 0, 0, 0)) : null;
+      const filterEnd = dateRange.to ? new Date(dateRange.to.setHours(23, 59, 59, 999)) : null;
+
+      if (filterStart && enquiryDate < filterStart) return false;
+      if (filterEnd && enquiryDate > filterEnd) return false;
     }
 
     return true;
@@ -231,7 +254,7 @@ export default function EnquiriesPage() {
             {/* Filter Panel */}
             {showFilters && (
               <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/30">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Status Filter */}
                   <div className="space-y-2">
                     <Label htmlFor="status-filter">Status</Label>
@@ -290,6 +313,15 @@ export default function EnquiriesPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Date Range Filter */}
+                  <div className="space-y-2">
+                    <Label>Date Range</Label>
+                    <DateRangePicker
+                      dateRange={dateRange}
+                      onDateRangeChange={setDateRange}
+                    />
                   </div>
                 </div>
               </div>

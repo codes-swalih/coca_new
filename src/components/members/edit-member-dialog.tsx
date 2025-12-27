@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const memberFormSchema = z.object({
   nameOfBusinessOwner: z.string().min(2, "Name must be at least 2 characters"),
+  businessName: z.string().optional(),
   designation: z.string().min(2, "Designation must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be at least 10 characters"),
   email: z.string().email("Invalid email address"),
@@ -31,6 +32,9 @@ interface EditMemberDialogProps {
       _id: string;
       chapter?: string | { _id: string; chapterName: string };
     };
+    member_business_detail?: {
+      nameOfBusiness?: string;
+    } | null;
   };
   onSave: (updatedMember: any) => Promise<void>;
 }
@@ -58,6 +62,7 @@ export function EditMemberDialog({ member, onSave }: EditMemberDialogProps) {
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
       nameOfBusinessOwner: member.member_personal_detail.nameOfBusinessOwner,
+      businessName: member.member_business_detail?.nameOfBusiness || "",
       designation: member.member_personal_detail.designation,
       phone: member.member_personal_detail.phone,
       email: member.member_personal_detail.email,
@@ -145,6 +150,19 @@ export function EditMemberDialog({ member, onSave }: EditMemberDialogProps) {
                   <FormLabel>Business Owner Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Optional" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

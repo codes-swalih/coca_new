@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const memberFormSchema = z.object({
   nameOfBusinessOwner: z.string().min(2, "Name must be at least 2 characters"),
+  businessName: z.string().optional(),
   designation: z.string().min(2, "Designation must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be at least 10 characters"),
   secondaryPhone: z.string().min(10, "Secondary phone number must be at least 10 characters"),
@@ -39,6 +40,7 @@ export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
     resolver: zodResolver(memberFormSchema),
     defaultValues: {
       nameOfBusinessOwner: "",
+      businessName: "",
       designation: "",
       phone: "",
       email: "",
@@ -103,6 +105,19 @@ export function AddMemberDialog({ onAdd }: AddMemberDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Business Owner Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="businessName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Business Name</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
