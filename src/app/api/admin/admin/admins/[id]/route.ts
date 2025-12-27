@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToMongoDB } from "../../../../../../../libs/mongodb";
 import adminModel from "../../../../../models/admin/adminModel";
+import bcrypt from "bcryptjs";
 
 export async function PUT(
   request: NextRequest,
@@ -61,7 +62,8 @@ export async function PUT(
 
     // Only update password if provided
     if (password && password.trim() !== "") {
-      updateData.password = password;
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
     }
 
     // Update admin

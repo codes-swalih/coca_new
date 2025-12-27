@@ -36,7 +36,7 @@ export function Sidebar() {
   return (
     <div className="fixed inset-y-0 left-0 z-50 flex h-full w-56 flex-col border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-[60px] items-center border-b px-6">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <Image 
             src="/logo.svg" 
             alt="COCA Logo" 
