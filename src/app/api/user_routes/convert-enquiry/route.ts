@@ -26,14 +26,10 @@ export const POST = async (req: Request) => {
       );
     }
 
-    // Check if booking already exists for this enquiry
-    const existingBooking = await bookings.findOne({
-      startingDate: existingEnquiry.date,
-      endingDate: existingEnquiry.date,
-      emailId: existingEnquiry.email,
-    });
+    // Check if this enquiry was already converted
+    const existingBooking = await bookings.findOne({ enquiryId });
 
-    if (existingBooking) {
+    if (existingBooking || existingEnquiry.status === "converted") {
       return NextResponse.json(
         {
           status: "Failed",
@@ -69,6 +65,8 @@ export const POST = async (req: Request) => {
       balanceAmount: "0", // Default value
       expenses: "", // Default empty value
       memberId: existingEnquiry.memberId,
+      dayOrNight: true, // Enquiries carry no time-of-day info; default to day
+      enquiryId,
     });
 
     if (!newBooking) {
