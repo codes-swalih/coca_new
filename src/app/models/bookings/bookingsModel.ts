@@ -36,6 +36,7 @@ interface IBookingModel extends Document {
   expenses: string;
   memberId: string;
   dayOrNight: boolean;
+  enquiryId?: string;
 }
 
 const MemberSchema = new Schema({
@@ -73,7 +74,8 @@ const BookingSchema: Schema<IBookingModel> = new Schema({
   balanceAmount: { type: String },
   expenses: { type: String },
   memberId: { type: String, required: true },
-  dayOrNight: { type: Boolean },
+  dayOrNight: { type: Boolean, default: true },
+  enquiryId: { type: String },
 });
 
 export default mongoose.models.bookings ??

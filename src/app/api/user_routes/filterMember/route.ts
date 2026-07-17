@@ -92,7 +92,12 @@ export async function GET(req: NextRequest) {
       let bookingQuery: any = { startingDate: date };
       if (dayOrNightParam !== null) {
         const dayOrNight = dayOrNightParam === "true";
-        bookingQuery.dayOrNight = dayOrNight;
+        // Legacy bookings (e.g. converted enquiries before the default was
+        // added) store no dayOrNight field. Treat absent as day so those
+        // bookings still block the day slot and prevent double-booking.
+        bookingQuery.dayOrNight = dayOrNight
+          ? { $in: [true, null] }
+          : false;
       }
 
       const bookedBookings = await bookings.find(bookingQuery).lean();
