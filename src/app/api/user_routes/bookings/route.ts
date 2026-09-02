@@ -3,6 +3,11 @@ import { connectToMongoDB } from "../../../../../libs/mongodb";
 import { NextResponse } from "next/server";
 import { stat } from "fs";
 import { messaging } from "../../../../configs/firebase_admin";
+import userPersonal from "../../../../app/models/admin/UserPersonal";
+import {
+  BookingResponseSource,
+  prepareBookingForMember,
+} from "@/lib/booking-access";
 
 interface IMember {
   memberName: string;
@@ -41,6 +46,35 @@ interface bookingsRequest {
   memberId: string;
   dayOrNight: boolean;
 }
+
+interface BookingDocument {
+  toObject(): BookingResponseSource;
+}
+
+const prepareBookingsResponse = async (
+  bookingDocuments: BookingDocument[],
+  requesterMemberId: string | null
+) => {
+  const bookingData = bookingDocuments.map((booking) => booking.toObject());
+  const ownerIds = Array.from(
+    new Set(bookingData.map((booking) => booking.memberId))
+  );
+  const owners = await userPersonal
+    .find({ memberId: { $in: ownerIds } })
+    .select("memberId nameOfBusinessOwner")
+    .lean();
+  const ownerNames = new Map(
+    owners.map((owner) => [owner.memberId, owner.nameOfBusinessOwner])
+  );
+
+  return bookingData.map((booking) =>
+    prepareBookingForMember(
+      booking,
+      requesterMemberId,
+      ownerNames.get(booking.memberId) || null
+    )
+  );
+};
 
 export const POST = async (req: Request) => {
   const body: bookingsRequest = await req.json();
@@ -151,7 +185,7 @@ export const GET = async (req: Request) => {
         {
           status: "Success",
           message: "Booking retrieved successfully",
-          data: booking,
+          data: await prepareBookingsResponse(booking, memberId),
         },
         { status: 200 }
       );
@@ -170,7 +204,7 @@ export const GET = async (req: Request) => {
       {
         status: "Success",
         message: "You have successfully retrieved all bookings",
-        data: allBookings,
+        data: await prepareBookingsResponse(allBookings, null),
       },
       { status: 200 }
     );

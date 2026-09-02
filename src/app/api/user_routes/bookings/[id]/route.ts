@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import bookings from "../../../../models/bookings/bookingsModel";
 import { connectToMongoDB } from "../../../../../../libs/mongodb";
+import userPersonal from "../../../../models/admin/UserPersonal";
+import { prepareBookingForMember } from "@/lib/booking-access";
 
 interface IMember {
   memberName: string;
@@ -148,11 +150,23 @@ export const GET = async (
         { status: 404 }
       );
     }
+
+    const requesterMemberId = new URL(req.url).searchParams.get("memberId");
+    const owner = await userPersonal
+      .findOne({ memberId: booking.memberId })
+      .select("nameOfBusinessOwner")
+      .lean();
+    const responseBooking = prepareBookingForMember(
+      booking.toObject(),
+      requesterMemberId,
+      owner?.nameOfBusinessOwner || null
+    );
+
     return NextResponse.json(
       {
         status: "Success",
         message: "You have successfully retrieved the booking",
-        data: booking,
+        data: responseBooking,
       },
       { status: 200 }
     );
